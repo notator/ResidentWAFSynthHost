@@ -19,6 +19,21 @@
                     </tr>
                 </table>
             </div>
+            <div id="inputDeviceSelectDiv">
+                <hr />
+                <table>
+                    <colgroup>
+                        <col style="width:75px" />
+                        <col />
+                    </colgroup>
+                    <tr>
+                        <td><span class="boldSubtitle">Input Device:</span></td>
+                        <td>
+                            <select id="inputDeviceSelect" class="synthSelect" onchange="WebMIDI.host.onInputDeviceSelectChanged()"></select>
+                        </td>
+                    </tr>
+                </table>
+            </div>
             <div id="synthSelectDiv" style="display:block">
                 <hr />
                 <table>

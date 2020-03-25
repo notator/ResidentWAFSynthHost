@@ -17,14 +17,29 @@ WebMIDI.host = (function(document)
 {
 	"use strict";
 
-	var
-		commandInputIDs = [], // used by AllControllersOff control
-		longInputControlIDs = [], // used by AllControllersOff control
+    var
+        inputDevice = null,
+        commandInputIDs = [], // used by AllControllersOff control
+        longInputControlIDs = [], // used by AllControllersOff control
 
-		getElem = function(elemID)
-		{
-			return document.getElementById(elemID);
-		},
+        getElem = function(elemID)
+        {
+            return document.getElementById(elemID);
+        },
+
+        onInputDeviceSelectChanged = function()
+        {
+            let ids = getElem("inputDeviceSelect");
+
+            if(ids.selectedIndex > 0)
+            {
+                inputDevice = ids[ids.selectedIndex].inputDevice;
+            }
+            else
+            {
+                inputDevice = null;
+            }
+        },
 
 		openInNewTab = function(url)
 		{
@@ -1018,10 +1033,79 @@ WebMIDI.host = (function(document)
 				getElem("controlsDiv").style.display = "none";
 				getElem("noteDiv1").style.display = "none";
 				getElem("notesDiv2").style.display = "none";
-			}
+            }
+
+            function setupInputDeviceSelect()
+            {
+                function setInputDeviceSelect(midiAccess)
+                {
+                    let ids = getElem("inputDeviceSelect"),
+                        option;
+
+                    ids.options.length = 0; // important when called by midiAccess.onstatechange 
+
+                    option = document.createElement("option");
+                    if(midiAccess !== null)
+                    {
+                        option.text = "choose a MIDI input device";
+                        ids.add(option, null);
+                        midiAccess.inputs.forEach(function(port)
+                        {
+                            //console.log('input id:', port.id, ' input name:', port.name);
+                            option = document.createElement("option");
+                            option.inputDevice = port;
+                            option.text = port.name;
+                            ids.add(option, null);
+                        });
+                        ids.disabled = false;
+                    }
+                    else
+                    {
+                        option.text = "MIDI input devices are not available";
+                        ids.add(option, null);
+                        ids.disabled = true;
+                    }
+
+                    for(var i = ids.options.length - 1; i >= 0; --i)
+                    {
+                        ids.selectedIndex = i;
+                        if(ids[ids.selectedIndex].text === "E-MU Xboard49")
+                        {
+                            inputDevice = ids[ids.selectedIndex].inputDevice;
+                            break;
+                        }
+                    }
+                }
+
+                window.addEventListener("load", function()
+                {
+                    "use strict";
+
+                    let
+                        onSuccessCallback = function(midiAccess)
+                        {
+                            // Save the midiAccess object and set
+                            // the contents of the device selector menus.
+                            setInputDeviceSelect(midiAccess);
+                        },
+
+                        // This function should be called either
+                        // if the browser does not support the Web MIDI API,
+                        // or if the user refuses permission to use his hardware MIDI devices.
+                        onErrorCallback = function()
+                        {
+                            alert("Error getting midiAccess for the inputDevice.");
+                        };
+
+                    navigator.requestMIDIAccess().then(onSuccessCallback, onErrorCallback);
+
+                }, false);
+            }
 
 			let	option,
-				synthSelect = getElem("synthSelect");
+                synthSelect = getElem("synthSelect");
+
+            setupInputDeviceSelect();
 
 			setInitialDivsDisplay();
 
@@ -1035,7 +1119,9 @@ WebMIDI.host = (function(document)
 
 		publicAPI =
 		{
-			gitHubButtonClick: gitHubButtonClick,
+            gitHubButtonClick: gitHubButtonClick,
+
+            onInputDeviceSelectChanged: onInputDeviceSelectChanged,
 
 			onSynthSelectChanged: onSynthSelectChanged,
 
