@@ -1,0 +1,114 @@
+﻿
+.app
+{
+    font-family: Lucida Sans Unicode, Verdana, Arial, Geneva, Sans-Serif;
+    font-size: 11px; 
+	width: 420px;
+	margin:30px auto 0 auto;
+	padding:25px;
+	border:1px solid black;
+}
+
+.boldTitle
+{
+	font-weight: bold;
+	font-size:14px;
+}
+
+.boldSubtitle
+{
+	font-weight: bold;
+}
+
+.midiMessagesTable
+{
+	font-size: 11px;
+	margin-left:auto;
+	margin-right:auto;
+}
+
+.left
+{
+	text-align:right;
+}
+
+.synthSelect
+{
+	font-size: 11px;
+	width: 300px;
+	height: 18px;
+	margin-left: 0;
+}
+
+.sf2OriginSelect {
+	font-size: 11px;
+	width: 160px;
+	margin-left: 0;
+}
+
+.sf2Select {
+	font-size: 11px;
+	width: 135px;
+	margin-left: 0;
+}
+
+.webAudioFontSelect
+{
+	font-size: 11px;
+	width: 275px;
+	height: 18px;
+	margin-left: 0;
+}
+
+.presetSelect
+{
+	font-size: 11px;
+	width: 270px;
+	height: 18px;
+	margin-left: 0;
+}
+
+.valueSelector
+{
+    font-size: 11px; 
+    width: 45px;
+    margin-left: 0;
+	margin-right: 4px;
+}
+
+.number
+{
+    font-size: 11px;
+    width: 41px;
+    margin-left: 0;
+	margin-right: 4px;
+}
+
+.sendAgainButton
+{
+    font-size: 11px;
+	height:18px;
+}
+
+.sendButton
+{
+    font-size: 11px;
+	height:18px;
+	width:45px;
+}
+
+.smallButton
+{
+	font-size:11px;
+	height:22px;
+}
+
+.largeButton
+{
+	font-size:12px;
+	height:24px;
+	width:80px;
+	margin-top:10px;
+}
+
+
