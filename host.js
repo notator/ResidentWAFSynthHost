@@ -18,6 +18,7 @@ WebMIDI.host = (function(document)
 	"use strict";
 
     var
+        synth = new WebMIDI.residentWAFSynth.ResidentWAFSynth(),
         inputDevice = null,
         commandInputIDs = [], // used by AllControllersOff control
         longInputControlIDs = [], // used by AllControllersOff control
@@ -27,13 +28,75 @@ WebMIDI.host = (function(document)
             return document.getElementById(elemID);
         },
 
+        handleInputMessage = function(e)
+        {
+            function getMsgString(data)
+            {
+                let str;
+
+                switch(data.length)
+                {
+                    case 1:
+                        str = "data[0]=" + data[0].toString(10) + " (0x" + data[0].toString(16) + ")";
+                        break;
+                    case 2:
+                        str = "data[0]=" + data[0].toString(10) + " (0x" + data[0].toString(16) + ")" +
+                              " data[1]=" + data[1].toString(10) + " (0x" + data[1].toString(16) + ")";
+                        break;
+                    case 3:
+                        str = "data[0]=" + data[0].toString(10) + " (0x" + data[0].toString(16) + ")" +
+                              " data[1]=" + data[1].toString(10) + " (0x" + data[1].toString(16) + ")" +
+                              " data[2]=" + data[2].toString(10) + " (0x" + data[2].toString(16) + ")";
+                        break;
+                    default:
+                        str = "Strange message (too long).";
+                        break;
+                }
+
+                return str;
+            }
+
+            var data = e.data,
+                d0, d1, d2;
+            try
+            {
+                console.log(getMsgString(data));
+                synth.send(data, performance.now());                
+            }
+            catch(msg)
+            {
+                console.warn("Synth threw an exception:\n" + msg + getMsgString(data));
+            }
+        },
+
+        setInputDeviceEventListener = function(inputDeviceSelect)
+        {
+            if(inputDevice !== null)
+            {
+                inputDevice.removeEventListener("midimessage", handleInputMessage, false);
+                inputDevice.close();
+            }
+
+            inputDevice = inputDeviceSelect.options[inputDeviceSelect.selectedIndex].inputDevice;
+            if(inputDevice)
+            {
+                inputDevice.addEventListener("midimessage", handleInputMessage, false);
+                inputDevice.open();
+            }
+            else
+            {
+                alert("Can't open input device.");
+                inputDeviceSelect.selectedIndex = 0;
+            }
+        },
+
         onInputDeviceSelectChanged = function()
         {
             let ids = getElem("inputDeviceSelect");
 
             if(ids.selectedIndex > 0)
             {
-                inputDevice = ids[ids.selectedIndex].inputDevice;
+                setInputDeviceEventListener(ids);
             }
             else
             {
@@ -55,10 +118,6 @@ WebMIDI.host = (function(document)
 
 		synthWebsiteButtonClick = function()
 		{
-			var
-				synthSelect = getElem("synthSelect"),
-				synth = synthSelect[synthSelect.selectedIndex].synth;
-
 			openInNewTab(synth.url);
 		},
 
@@ -84,10 +143,8 @@ WebMIDI.host = (function(document)
 		{
 			var CMD = WebMIDI.constants.COMMAND,
 				CTL = WebMIDI.constants.CONTROL,
-				synthSelect = getElem("synthSelect"),
 				channelSelect = getElem("channelSelect"),
 				presetSelect = getElem("presetSelect"),
-				synth = synthSelect.options[synthSelect.selectedIndex].synth,
 				channel = channelSelect.selectedIndex,
 				selectedOption = presetSelect.options[presetSelect.selectedIndex],
 				bankIndex, presetIndex;
@@ -134,8 +191,6 @@ WebMIDI.host = (function(document)
 		sendCommand = function(commandIndex, data1, data2)
 		{
 			var CMD = WebMIDI.constants.COMMAND,
-				synthSelect = getElem("synthSelect"),
-				synth = synthSelect[synthSelect.selectedIndex].synth,
 				channelSelect = getElem("channelSelect"),
 				channelIndex = parseInt(channelSelect[channelSelect.selectedIndex].value, 10),
 				status = commandIndex + channelIndex,
@@ -168,8 +223,6 @@ WebMIDI.host = (function(document)
 		setCommandsAndControlsDivs = function()
 		{
 			var CMD = WebMIDI.constants.COMMAND,
-				synthSelect = getElem("synthSelect"),
-				synth = synthSelect[synthSelect.selectedIndex].synth,
 				commandsDiv = getElem("commandsDiv"),
 				commandsTitleDiv = getElem("commandsTitleDiv"),
 				commandsTable = getElem("commandsTable"),
@@ -228,8 +281,6 @@ WebMIDI.host = (function(document)
 			function sendShortControl(controlIndex)
 			{
 				var
-					synthSelect = getElem("synthSelect"),
-					synth = synthSelect[synthSelect.selectedIndex].synth,
 					presetSelect = getElem("presetSelect"),
 					commands = synth.commands;
 
@@ -760,10 +811,8 @@ WebMIDI.host = (function(document)
 		// exported
 		onWebAudioFontSelectChanged = function()
 		{
-			let synthSelect = getElem("synthSelect"),
-				webAudioFontSelect = getElem("webAudioFontSelect"),
+			let webAudioFontSelect = getElem("webAudioFontSelect"),
 				presetSelect = getElem("presetSelect"),
-				synth = synthSelect[synthSelect.selectedIndex].synth,
 				selectedSoundFontOption = webAudioFontSelect[webAudioFontSelect.selectedIndex],
 				soundFont = selectedSoundFontOption.soundFont,
 				presetOptionsArray = selectedSoundFontOption.presetOptionsArray;
@@ -775,34 +824,10 @@ WebMIDI.host = (function(document)
 			onPresetSelectChanged();
 		},
 
-		// exported. Also used by init()
-		onSynthSelectChanged = function()
+		// exported.
+		onContinueAtStartClicked = function()
 		{
-			var
-				synthSelect = getElem("synthSelect"),
-				synth = synthSelect[synthSelect.selectedIndex].synth;
-
-			function setMonoPolyDisplay(synth)
-			{
-				var
-					synthInfoDiv = getElem("synthInfoDiv"),
-					singleChannelSynthInfo = getElem("singleChannelSynthInfo"),
-					multiChannelSynthInfo = getElem("multiChannelSynthInfo");
-
-				if(synth.isMultiChannel)
-				{
-					singleChannelSynthInfo.style.display = "none";
-					multiChannelSynthInfo.style.display = "table-row";
-				}
-				else
-				{
-					singleChannelSynthInfo.style.display = "table-row";
-					multiChannelSynthInfo.style.display = "none";
-				}
-				synthInfoDiv.style.display = "block";
-			}
-
-			function setSoundFontTableDisplay(synth)
+			function setWebAudioFontTableDisplay(synth)
 			{
 				function getWebAudioFontOptions(webAudioFonts)
 				{
@@ -842,16 +867,14 @@ WebMIDI.host = (function(document)
 
 				let
 					cursorControlDiv = getElem("cursorControlDiv"),
-					soundFontDiv = getElem("soundFontDiv"),
-					soundFontTable1 = getElem("soundFontTable1"),
-					soundFontTypeName = getElem("soundFontType"),
+					webAudioFontDiv = getElem("webAudioFontDiv"),
+					webAudioFontTable1 = getElem("webAudioFontTable1"),
 					webAudioFontSelect = getElem("webAudioFontSelect"),
-					soundFontTable2 = getElem("soundFontTable2");
+					webAudioFontTable2 = getElem("webAudioFontTable2");
 
 				cursorControlDiv.style.cursor = "auto";
 
                 console.assert(synth.name === "ResidentWAFSynth", "Error: this app only uses the ResidentWAFSynth")
-				soundFontTypeName.innerHTML = "WebAudioFont: ";
 
                 let options = getWebAudioFontOptions(synth.webAudioFonts);
 
@@ -860,34 +883,24 @@ WebMIDI.host = (function(document)
 				webAudioFontSelect.selectedIndex = 0;
 				webAudioFontSelect.style.display = "block";
 
-				soundFontDiv.style.display = "block";
-				soundFontTable1.style.display = "block";
-				soundFontTable2.style.display = "block";
+				webAudioFontDiv.style.display = "block";
+				webAudioFontTable1.style.display = "block";
+				webAudioFontTable2.style.display = "block";
 
 			}
 
-			synth.open();
+            synth.open();
 
-			synthSelect.onchange = onSynthSelectChanged; // activated by synthSelectDivButton
+            setInputDeviceEventListener(getElem("inputDeviceSelect"));
 
-			getElem("synthSelectDivButtonDiv").style.display = "none";
+            getElem("continueAtStartButtonDiv").style.display = "none";
 
-			setMonoPolyDisplay(synth);
-
-			setSoundFontTableDisplay(synth);
+			setWebAudioFontTableDisplay(synth);
 
 			setCommandsAndControlsDivs();
 
-			if(synth.isPolyphonic === true)
-			{
-				getElem("noteDiv1").style.display = "none";
-				getElem("notesDiv2").style.display = "block";
-			}
-			else
-			{
-				getElem("noteDiv1").style.display = "block";
-				getElem("notesDiv2").style.display = "none";
-			}
+			getElem("noteDiv1").style.display = "none";
+			getElem("notesDiv2").style.display = "block";
 		},
 
 		noteCheckboxClicked = function()
@@ -909,11 +922,9 @@ WebMIDI.host = (function(document)
 
 		sendNoteOff = function(noteIndex, noteVelocity)
 		{
-			var
-				NOTE_ON = WebMIDI.constants.COMMAND.NOTE_ON,
-				NOTE_OFF = WebMIDI.constants.COMMAND.NOTE_OFF,
-				synthSelect = getElem("synthSelect"),
-				synth = synthSelect[synthSelect.selectedIndex].synth;
+            var
+                NOTE_ON = WebMIDI.constants.COMMAND.NOTE_ON,
+                NOTE_OFF = WebMIDI.constants.COMMAND.NOTE_OFF;
 
 			if(synth.commands.indexOf(NOTE_OFF) >= 0)
 			{
@@ -1024,11 +1035,13 @@ WebMIDI.host = (function(document)
 		init = function()
 		{
 			function setInitialDivsDisplay()
-			{
-				getElem("synthSelectDiv").style.display = "block";
-				getElem("synthSelectDivButtonDiv").style.display = "block";
-				getElem("synthInfoDiv").style.display = "none";
-				getElem("soundFontDiv").style.display = "none";
+            {                
+                getElem("inputDeviceSelectDiv").style.display = "none";
+                getElem("synthNameDiv").style.display = "none";
+                getElem("synthInfoDiv").style.display = "none";
+                getElem("continueAtStartButtonDiv").style.display = "none";
+
+				getElem("webAudioFontDiv").style.display = "none";
 				getElem("commandsDiv").style.display = "none";
 				getElem("controlsDiv").style.display = "none";
 				getElem("noteDiv1").style.display = "none";
@@ -1039,42 +1052,47 @@ WebMIDI.host = (function(document)
             {
                 function setInputDeviceSelect(midiAccess)
                 {
-                    let ids = getElem("inputDeviceSelect"),
+                    let iDevSelect = getElem("inputDeviceSelect"),
                         option;
 
-                    ids.options.length = 0; // important when called by midiAccess.onstatechange 
+                    iDevSelect.options.length = 0; // important when called by midiAccess.onstatechange 
 
                     option = document.createElement("option");
                     if(midiAccess !== null)
                     {
                         option.text = "choose a MIDI input device";
-                        ids.add(option, null);
+                        iDevSelect.add(option, null);
                         midiAccess.inputs.forEach(function(port)
                         {
                             //console.log('input id:', port.id, ' input name:', port.name);
                             option = document.createElement("option");
                             option.inputDevice = port;
                             option.text = port.name;
-                            ids.add(option, null);
+                            iDevSelect.add(option, null);
                         });
-                        ids.disabled = false;
+                        iDevSelect.disabled = false;
                     }
                     else
                     {
-                        option.text = "MIDI input devices are not available";
-                        ids.add(option, null);
-                        ids.disabled = true;
+                        option.text = "There are no MIDI input devices available";
+                        iDevSelect.add(option, null);
+                        iDevSelect.disabled = true;
                     }
 
-                    for(var i = ids.options.length - 1; i >= 0; --i)
+                    for(var i = iDevSelect.options.length - 1; i >= 0; --i)
                     {
-                        ids.selectedIndex = i;
-                        if(ids[ids.selectedIndex].text === "E-MU Xboard49")
+                        iDevSelect.selectedIndex = i;
+                        if(iDevSelect[iDevSelect.selectedIndex].text === "E-MU Xboard49")
                         {
-                            inputDevice = ids[ids.selectedIndex].inputDevice;
+                            inputDevice = iDevSelect[iDevSelect.selectedIndex].inputDevice;
                             break;
                         }
                     }
+
+                    getElem("inputDeviceSelectDiv").style.display = "block";
+                    getElem("synthNameDiv").style.display = "block";
+                    getElem("synthInfoDiv").style.display = "block";
+                    getElem("continueAtStartButtonDiv").style.display = "block";
                 }
 
                 window.addEventListener("load", function()
@@ -1102,19 +1120,8 @@ WebMIDI.host = (function(document)
                 }, false);
             }
 
-			let	option,
-                synthSelect = getElem("synthSelect");
-
             setupInputDeviceSelect();
-
 			setInitialDivsDisplay();
-
-			// Do the following for each available synth.
-            // The synths appear in this order in the synth selector.
-			option = new Option("synthOption");
-			option.synth = new WebMIDI.residentWAFSynth.ResidentWAFSynth();
-			option.text = option.synth.name;
-			synthSelect.add(option);
 		},
 
 		publicAPI =
@@ -1123,7 +1130,7 @@ WebMIDI.host = (function(document)
 
             onInputDeviceSelectChanged: onInputDeviceSelectChanged,
 
-			onSynthSelectChanged: onSynthSelectChanged,
+			onContinueAtStartClicked: onContinueAtStartClicked,
 
 			synthWebsiteButtonClick: synthWebsiteButtonClick,
 			soundFontWebsiteButtonClick: webAudioFontWebsiteButtonClick,

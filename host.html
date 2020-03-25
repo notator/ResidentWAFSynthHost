@@ -19,7 +19,7 @@
                     </tr>
                 </table>
             </div>
-            <div id="inputDeviceSelectDiv">
+            <div id="inputDeviceSelectDiv" style="display:none">
                 <hr />
                 <table>
                     <colgroup>
@@ -29,32 +29,15 @@
                     <tr>
                         <td><span class="boldSubtitle">Input Device:</span></td>
                         <td>
-                            <select id="inputDeviceSelect" class="synthSelect" onchange="WebMIDI.host.onInputDeviceSelectChanged()"></select>
+                            <select id="inputDeviceSelect" class="inputDeviceSelect" onchange="WebMIDI.host.onInputDeviceSelectChanged()"></select>
+
                         </td>
                     </tr>
                 </table>
             </div>
-            <div id="synthSelectDiv" style="display:block">
+            <div id="synthNameDiv" style="display:none">
                 <hr />
-                <table>
-                    <colgroup>
-                        <col style="width:75px" />
-                        <col />
-                    </colgroup>
-                    <tr>
-                        <td><span class="boldSubtitle">Synth:</span></td>
-                        <td>
-                            <!--
-                            To add a synth, include its code at the bottom of this file, and add it to this
-                            select control in the controls.init() function (see Controls.js).
-                            -->
-                            <select id="synthSelect" class="synthSelect" />
-                        </td>
-                    </tr>
-                </table>
-                <div id="synthSelectDivButtonDiv" style="text-align:right">
-                    <input class="largeButton" type="button" value="continue" onclick="WebMIDI.host.onSynthSelectChanged()" />
-                </div>
+                <span class="boldSubtitle">&nbsp;Output Device: ResidentWAFSynth</span>
             </div>
             <div id="synthInfoDiv" style="display:none">
                 <table>
@@ -62,10 +45,6 @@
                         <col style="width:75px" />
                         <col />
                     </colgroup>
-                    <tr id="singleChannelSynthInfo">
-                        <td><input class="smallButton" type="button" value="website" onclick="WebMIDI.host.synthWebsiteButtonClick()" /></td>
-                        <td><span>single channel synth -- (ignores channel info)</span></td>
-                    </tr>
                     <tr id="multiChannelSynthInfo">
                         <td><input class="smallButton" type="button" value="website" onclick="WebMIDI.host.synthWebsiteButtonClick()" /></td>
                         <td>
@@ -92,24 +71,26 @@
                     </tr>
                 </table>
             </div>
-            <!-- Displayed only if the current synth uses soundFonts (Sf2 or WebAudioFont) -->
-            <div id="soundFontDiv" style="display:none">
+
+            <div id="continueAtStartButtonDiv" style="display:none; text-align:right">
+                <input class="largeButton" type="button" value="continue" onclick="WebMIDI.host.onContinueAtStartClicked()" />
+            </div>
+            <div id="webAudioFontDiv" style="display:none">
                 <hr />
-                <table id="soundFontTable1">
+                <table id="webAudioFontTable1">
                     <colgroup>
                         <col style="width:75px" />
                         <col />
                     </colgroup>
                     <tr>
-                        <!-- default name. Can change dynamically to "WebAudioFont: " -->
-                        <td><span id="soundFontType" class="boldSubtitle">SoundFont: </span></td>
+                        <td><span class="boldSubtitle">WebAudioFont: </span></td>
                         <td>
                             <!-- This select is hidden for Sf2 soundFonts -->
                             <select id="webAudioFontSelect" class="webAudioFontSelect" onchange="WebMIDI.host.onWebAudioFontSelectChanged()" />
                         </td>
                     </tr>
                 </table>
-                <table id="soundFontTable2">
+                <table id="webAudioFontTable2">
                     <colgroup>
                         <col style="width:75px" />
                         <col />
