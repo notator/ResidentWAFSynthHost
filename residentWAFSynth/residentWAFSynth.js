@@ -825,7 +825,14 @@ WebMIDI.residentWAFSynth = (function(window)
 		{
 			checkCommandExport(CMD.NOTE_ON);
 			// console.log("residentWAFSynth NoteOn: channel:" + channel + " note:" + data1 + " velocity:" + data2);
-			that.noteOn(channel, data1, data2);
+            if(data2 === 0)
+            {
+                that.noteOff(channel, data1, 100);
+            }
+            else
+            {
+                that.noteOn(channel, data1, data2);
+            }
 		}
 		function handleControl(channel, data1, data2)
 		{
