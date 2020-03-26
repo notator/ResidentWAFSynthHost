@@ -9,167 +9,156 @@
     <!-- Javascript files are included at the end of the body element -->
 </head>
 <body>
-    <div id="cursorControlDiv">
-        <div id="appDiv" class="app">
-            <div id="title">
-                <table style="width:420px">
-                    <tr>
-                        <td><span class="boldTitle">ResidentWAFSynth Host</span></td>
-                        <td style="text-align:right"><input class="smallButton" type="button" value="GitHub" style="width:80px" onclick="WebMIDI.host.gitHubButtonClick()" /></td>
-                    </tr>
-                </table>
-            </div>
-            <div id="inputDeviceSelectDiv" style="display:none">
-                <hr />
-                <table>
-                    <colgroup>
-                        <col style="width:75px" />
-                        <col />
-                    </colgroup>
-                    <tr>
-                        <td><span class="boldSubtitle">Input Device:</span></td>
-                        <td>
-                            <select id="inputDeviceSelect" class="inputDeviceSelect" onchange="WebMIDI.host.onInputDeviceSelectChanged()"></select>
+    <div id="title">
+        <table style="width:420px">
+            <tr>
+                <td><span class="boldTitle">ResidentWAFSynth Host</span></td>
+                <td style="text-align:right"><input class="smallButton" type="button" value="GitHub" style="width:80px" onclick="WebMIDI.host.gitHubButtonClick()" /></td>
+            </tr>
+        </table>
+    </div>
+    <div id="loadingMsgDiv">
+        <span>&nbsp;loading Web Audio Fonts...</span>
+    </div>
+    <div id="inputDeviceSelectDiv" style="display:none">
+        <hr />
+        <table>
+            <colgroup>
+                <col style="width:75px" />
+                <col />
+            </colgroup>
+            <tr>
+                <td><span class="boldSubtitle">Input Device:</span></td>
+                <td>
+                    <select id="inputDeviceSelect" class="inputDeviceSelect" onchange="WebMIDI.host.onInputDeviceSelectChanged()"></select>
 
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            <div id="synthNameDiv" style="display:none">
-                <hr />
-                <span class="boldSubtitle">&nbsp;Output Device: ResidentWAFSynth</span>
-            </div>
-            <div id="synthInfoDiv" style="display:none">
-                <table>
-                    <colgroup>
-                        <col style="width:75px" />
-                        <col />
-                    </colgroup>
-                    <tr id="multiChannelSynthInfo">
-                        <td><input class="smallButton" type="button" value="website" onclick="WebMIDI.host.synthWebsiteButtonClick()" /></td>
-                        <td>
-                            <span>multichannel synth -- channel:</span>
-                            <select id="channelSelect" class="valueSelector" onchange="WebMIDI.host.onChannelSelectChanged()">
-                                <option value="0">0</option>
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3">3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                                <option value="6">6</option>
-                                <option value="7">7</option>
-                                <option value="8">8</option>
-                                <option value="9">9</option>
-                                <option value="10">10</option>
-                                <option value="11">11</option>
-                                <option value="12">12</option>
-                                <option value="13">13</option>
-                                <option value="14">14</option>
-                                <option value="15">15</option>
-                            </select>
-                        </td>
-                    </tr>
-                </table>
-            </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="synthInfoDiv" style="display:none">
+        <hr />
+        <span class="boldSubtitle">&nbsp;Output Device: ResidentWAFSynth</span>
+        <table>
+            <colgroup>
+                <col style="width:75px" />
+                <col />
+            </colgroup>
+            <tr>
+                <td><input class="smallButton" type="button" value="website" onclick="WebMIDI.host.synthWebsiteButtonClick()" /></td>
+                <td>
+                    <span>multichannel synth -- channel:</span>
+                    <select id="channelSelect" class="valueSelector" onchange="WebMIDI.host.onChannelSelectChanged()">
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                        <option value="11">11</option>
+                        <option value="12">12</option>
+                        <option value="13">13</option>
+                        <option value="14">14</option>
+                        <option value="15">15</option>
+                    </select>
+                </td>
+            </tr>
+        </table>
+    </div>
 
-            <div id="continueAtStartButtonDiv" style="display:none; text-align:right">
-                <input class="largeButton" type="button" value="continue" onclick="WebMIDI.host.onContinueAtStartClicked()" />
-            </div>
-            <div id="webAudioFontDiv" style="display:none">
-                <hr />
-                <table id="webAudioFontTable1">
-                    <colgroup>
-                        <col style="width:75px" />
-                        <col />
-                    </colgroup>
-                    <tr>
-                        <td><span class="boldSubtitle">WebAudioFont: </span></td>
-                        <td>
-                            <!-- This select is hidden for Sf2 soundFonts -->
-                            <select id="webAudioFontSelect" class="webAudioFontSelect" onchange="WebMIDI.host.onWebAudioFontSelectChanged()" />
-                        </td>
-                    </tr>
-                </table>
-                <table id="webAudioFontTable2">
-                    <colgroup>
-                        <col style="width:75px" />
-                        <col />
-                    </colgroup>
-                    <tr>
-                        <td><input class="smallButton" type="button" value="website" onclick="WebMIDI.host.soundFontWebsiteButtonClick()" /></td>
-                        <td id="loadLog"></td>
-                    </tr>
-                </table>
-            </div>
-            <div id="commandsDiv" style="display:none">
-                <hr />
-                <div id="commandsTitleDiv"><span class="boldSubtitle">Commands:</span></div>
-                <table id="commandsTable" class="midiMessagesTable"></table>
-            </div>
-            <div id="controlsDiv" style="display:none">
-                <hr />
-                <div id="controlsTitleDiv"><span class="boldSubtitle">Controls:</span></div>
-                <table id="controlsTable" class="midiMessagesTable"></table>
-            </div>
-            <div id="noteDiv1" style="display:none">
-                <hr />
-                <table>
-                    <colgroup>
-                        <col style="width:70px" />
-                        <col />
-                    </colgroup>
-                    <tr>
-                        <td>
-                            <span class="boldSubtitle">Note:</span>
-                        </td>
-                        <td>
-                            <span>note</span>
-                            <input id="noteDiv1IndexInput" type="number" name="value" class="number" min="0" max="127" value="64" />
-                            <span>velocity</span>
-                            <input id="noteDiv1VelocityInput" type="number" name="value" class="number" min="0" max="127" value="100" />
-                            <input id="sendButton1" type="button" class="sendButton" value="send" onmousedown="WebMIDI.host.doNoteOn()" onmouseup="WebMIDI.host.doNoteOff()" />
-                            <label><input type="checkbox" id="holdCheckbox1" value="hold" style="vertical-align:middle" onclick="WebMIDI.host.holdCheckboxClicked()" />hold</label>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            <div id="notesDiv2" style="display:none">
-                <hr />
-                <table>
-                    <colgroup>
-                        <col style="width:70px" />
-                        <col />
-                    </colgroup>
-                    <tr>
-                        <td>
-                            <span class="boldSubtitle">Note:</span>
-                        </td>
-                        <td>
-                            <span>note</span>
-                            <input id="notesDiv2IndexInput1" type="number" name="value" class="number" min="0" max="127" value="68" />
-                            <span>velocity</span>
-                            <input id="notesDiv2VelocityInput1" type="number" name="value" class="number" min="0" max="127" value="100" />
-                            <input type="checkbox" id="sendNote1Checkbox" style="vertical-align:middle" onclick="WebMIDI.host.noteCheckboxClicked()" />
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <span>&nbsp;</span>
-                        </td>
-                        <td>
-                            <span>note</span>
-                            <input id="notesDiv2IndexInput2" type="number" name="value" class="number" min="0" max="127" value="64" />
-                            <span>velocity</span>
-                            <input id="notesDiv2VelocityInput2" type="number" name="value" class="number" min="0" max="127" value="100" />
-                            <input type="checkbox" id="sendNote2Checkbox" style="vertical-align:middle" onclick="WebMIDI.host.noteCheckboxClicked()" checked="checked" />
-                            <input id="sendButton2" type="button" class="sendButton" value="send" onmousedown="WebMIDI.host.doNotesOn()" onmouseup="WebMIDI.host.doNotesOff()" />
-                            <label><input type="checkbox" id="holdCheckbox2" value="hold" style="vertical-align:middle" onclick="WebMIDI.host.holdCheckboxClicked()" />hold</label>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-        </div> <!-- appDiv -->
-    </div> <!-- cursorControlDiv -->
+    <div id="continueAtStartButtonDiv" style="display:none; text-align:right">
+        <input class="largeButton" type="button" value="continue" onclick="WebMIDI.host.onContinueAtStartClicked()" />
+    </div>
+    <div id="webAudioFontDiv" style="display:none">
+        <hr />
+        <table>
+            <colgroup>
+                <col style="width:75px" />
+                <col />
+            </colgroup>
+            <tr>
+                <td><span class="boldSubtitle">WebAudioFont: </span></td>
+                <td>
+                    <select id="webAudioFontSelect" class="webAudioFontSelect" onchange="WebMIDI.host.onWebAudioFontSelectChanged()" />
+                </td>
+            </tr>
+            <tr>
+                <td><input class="smallButton" type="button" value="website" onclick="WebMIDI.host.soundFontWebsiteButtonClick()" /></td>
+            </tr>
+        </table>
+    </div>
+    <div id="commandsDiv" style="display:none">
+        <hr />
+        <span class="boldSubtitle">Commands:</span>
+        <table id="commandsTable" class="midiMessagesTable"></table>
+    </div>
+    <div id="controlsDiv" style="display:none">
+        <hr />
+        <span class="boldSubtitle">Controls:</span>
+        <table id="controlsTable" class="midiMessagesTable"></table>
+    </div>
+    <div id="noteDiv1" style="display:none">
+        <hr />
+        <table>
+            <colgroup>
+                <col style="width:70px" />
+                <col />
+            </colgroup>
+            <tr>
+                <td>
+                    <span class="boldSubtitle">Note:</span>
+                </td>
+                <td>
+                    <span>note</span>
+                    <input id="noteDiv1IndexInput" type="number" name="value" class="number" min="0" max="127" value="64" />
+                    <span>velocity</span>
+                    <input id="noteDiv1VelocityInput" type="number" name="value" class="number" min="0" max="127" value="100" />
+                    <input id="sendButton1" type="button" class="sendButton" value="send" onmousedown="WebMIDI.host.doNoteOn()" onmouseup="WebMIDI.host.doNoteOff()" />
+                    <label><input type="checkbox" id="holdCheckbox1" value="hold" style="vertical-align:middle" onclick="WebMIDI.host.holdCheckboxClicked()" />hold</label>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="notesDiv2" style="display:none">
+        <hr />
+        <table>
+            <colgroup>
+                <col style="width:70px" />
+                <col />
+            </colgroup>
+            <tr>
+                <td>
+                    <span class="boldSubtitle">Note:</span>
+                </td>
+                <td>
+                    <span>note</span>
+                    <input id="notesDiv2IndexInput1" type="number" name="value" class="number" min="0" max="127" value="68" />
+                    <span>velocity</span>
+                    <input id="notesDiv2VelocityInput1" type="number" name="value" class="number" min="0" max="127" value="100" />
+                    <input type="checkbox" id="sendNote1Checkbox" style="vertical-align:middle" onclick="WebMIDI.host.noteCheckboxClicked()" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <span>&nbsp;</span>
+                </td>
+                <td>
+                    <span>note</span>
+                    <input id="notesDiv2IndexInput2" type="number" name="value" class="number" min="0" max="127" value="64" />
+                    <span>velocity</span>
+                    <input id="notesDiv2VelocityInput2" type="number" name="value" class="number" min="0" max="127" value="100" />
+                    <input type="checkbox" id="sendNote2Checkbox" style="vertical-align:middle" onclick="WebMIDI.host.noteCheckboxClicked()" checked="checked" />
+                    <input id="sendButton2" type="button" class="sendButton" value="send" onmousedown="WebMIDI.host.doNotesOn()" onmouseup="WebMIDI.host.doNotesOff()" />
+                    <label><input type="checkbox" id="holdCheckbox2" value="hold" style="vertical-align:middle" onclick="WebMIDI.host.holdCheckboxClicked()" />hold</label>
+                </td>
+            </tr>
+        </table>
+    </div>
 
     <script src="WebMIDI/namespace.js" type="text/javascript"></script>
     <script src="WebMIDI/constants.js" type="text/javascript"></script>	<!-- contains PitchWheelDeviation constants -->

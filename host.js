@@ -224,10 +224,8 @@ WebMIDI.host = (function(document)
 		{
 			var CMD = WebMIDI.constants.COMMAND,
 				commandsDiv = getElem("commandsDiv"),
-				commandsTitleDiv = getElem("commandsTitleDiv"),
 				commandsTable = getElem("commandsTable"),
 				controlsDiv = getElem("controlsDiv"),
-				controlsTitleDiv = getElem("controlsTitleDiv"),
 				controlsTable = getElem("controlsTable");
 
 			function emptyTables(commandsTable, controlsTable)
@@ -778,7 +776,6 @@ WebMIDI.host = (function(document)
 			if(hasCommandsDiv(synth.commands))
 			{
 				commandsDiv.style.display = "block";
-				commandsTitleDiv.style.display = "block";
 				commandsTable.style.display = "table";
 
 				appendCommandRows(commandsTable, synth.commands);
@@ -786,14 +783,12 @@ WebMIDI.host = (function(document)
 			else
 			{
 				commandsDiv.style.display = "none";
-				commandsTitleDiv.style.display = "none";
 				commandsTable.style.display = "none";
 			}
 
 			if(synth.controls !== undefined && synth.controls.length > 0)
 			{
 				controlsDiv.style.display = "block";
-				controlsTitleDiv.style.display = "block";
 				controlsTable.style.display = "table";
 
 				appendControlRows(controlsTable, synth.controls);
@@ -801,7 +796,6 @@ WebMIDI.host = (function(document)
 			else
 			{
 				controlsDiv.style.display = "none";
-				controlsTitleDiv.style.display = "none";
 				controlsTable.style.display = "none";
 			}
 
@@ -865,14 +859,9 @@ WebMIDI.host = (function(document)
 					return options;
 				}
 
-				let
-					cursorControlDiv = getElem("cursorControlDiv"),
-					webAudioFontDiv = getElem("webAudioFontDiv"),
-					webAudioFontTable1 = getElem("webAudioFontTable1"),
-					webAudioFontSelect = getElem("webAudioFontSelect"),
-					webAudioFontTable2 = getElem("webAudioFontTable2");
-
-				cursorControlDiv.style.cursor = "auto";
+                let
+                    webAudioFontDiv = getElem("webAudioFontDiv"),
+                    webAudioFontSelect = getElem("webAudioFontSelect");
 
                 console.assert(synth.name === "ResidentWAFSynth", "Error: this app only uses the ResidentWAFSynth")
 
@@ -881,12 +870,8 @@ WebMIDI.host = (function(document)
 				setOptions(webAudioFontSelect, options);
 
 				webAudioFontSelect.selectedIndex = 0;
-				webAudioFontSelect.style.display = "block";
 
 				webAudioFontDiv.style.display = "block";
-				webAudioFontTable1.style.display = "block";
-				webAudioFontTable2.style.display = "block";
-
 			}
 
             synth.open();
@@ -1034,21 +1019,7 @@ WebMIDI.host = (function(document)
 
 		init = function()
 		{
-			function setInitialDivsDisplay()
-            {                
-                getElem("inputDeviceSelectDiv").style.display = "none";
-                getElem("synthNameDiv").style.display = "none";
-                getElem("synthInfoDiv").style.display = "none";
-                getElem("continueAtStartButtonDiv").style.display = "none";
-
-				getElem("webAudioFontDiv").style.display = "none";
-				getElem("commandsDiv").style.display = "none";
-				getElem("controlsDiv").style.display = "none";
-				getElem("noteDiv1").style.display = "none";
-				getElem("notesDiv2").style.display = "none";
-            }
-
-            function setupInputDeviceSelect()
+            function setupInputDevice()
             {
                 function setInputDeviceSelect(midiAccess)
                 {
@@ -1088,39 +1059,41 @@ WebMIDI.host = (function(document)
                             break;
                         }
                     }
-
-                    getElem("inputDeviceSelectDiv").style.display = "block";
-                    getElem("synthNameDiv").style.display = "block";
-                    getElem("synthInfoDiv").style.display = "block";
-                    getElem("continueAtStartButtonDiv").style.display = "block";
                 }
 
-                window.addEventListener("load", function()
+                function onSuccessCallback(midiAccess)
                 {
-                    "use strict";
+                    // Add the midiAccess.inputs to the inputDeviceSelect.
+                    setInputDeviceSelect(midiAccess);
+                }
 
-                    let
-                        onSuccessCallback = function(midiAccess)
-                        {
-                            // Save the midiAccess object and set
-                            // the contents of the device selector menus.
-                            setInputDeviceSelect(midiAccess);
-                        },
+                // This function will be called either
+                // if the browser does not support the Web MIDI API,
+                // or if the user refuses permission to use his hardware MIDI devices.
+                function onErrorCallback()
+                {
+                    alert("Error getting midiAccess for the inputDevice.");
+                };
 
-                        // This function should be called either
-                        // if the browser does not support the Web MIDI API,
-                        // or if the user refuses permission to use his hardware MIDI devices.
-                        onErrorCallback = function()
-                        {
-                            alert("Error getting midiAccess for the inputDevice.");
-                        };
-
-                    navigator.requestMIDIAccess().then(onSuccessCallback, onErrorCallback);
-
-                }, false);
+                navigator.requestMIDIAccess().then(onSuccessCallback, onErrorCallback);
             }
 
-            setupInputDeviceSelect();
+            function setInitialDivsDisplay()
+            {
+                getElem("loadingMsgDiv").style.display = "none";
+
+                getElem("inputDeviceSelectDiv").style.display = "block";
+                getElem("synthInfoDiv").style.display = "block";
+                getElem("continueAtStartButtonDiv").style.display = "block";
+
+                getElem("webAudioFontDiv").style.display = "none";
+                getElem("commandsDiv").style.display = "none";
+                getElem("controlsDiv").style.display = "none";
+                getElem("noteDiv1").style.display = "none";
+                getElem("notesDiv2").style.display = "none";
+            }
+
+            setupInputDevice();
 			setInitialDivsDisplay();
 		},
 
