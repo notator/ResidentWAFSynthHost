@@ -1103,9 +1103,6 @@ WebMIDI.host = (function(document)
             function setInitialDivsDisplay()
             {
                 getElem("loadingMsgDiv").style.display = "none";
-
-                getElem("inputDeviceSelectDiv").style.display = "block";
-                getElem("synthInfoDiv").style.display = "block";
                 getElem("continueAtStartButtonDiv").style.display = "block";
 
                 getElem("webAudioFontDiv").style.display = "none";
