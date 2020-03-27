@@ -285,14 +285,14 @@ WebMIDI.host = (function(document)
 					{
 						inputID = commandInputIDs[i];
 						numberInputElem = getElem(inputID);
-						numberInputElem.value = numberInputElem.defaultValue;
+                        numberInputElem.value = numberInputElem.defaultValue;
 					}
 
 					for(i = 0; i < longInputControlIDs.length; ++i)
 					{
 						inputID = longInputControlIDs[i];
 						numberInputElem = getElem(inputID);
-						numberInputElem.value = numberInputElem.uControl.defaultValue;
+                        numberInputElem.value = numberInputElem.uControl.defaultValue;
 					}
 				}
 
@@ -379,7 +379,28 @@ WebMIDI.host = (function(document)
 				input.value = "send again";
 				input.onclick = onPresetSelectChanged;
                 presetSelectCell.appendChild(input);
-			}
+            }
+
+            // called by both commands and CCs
+            function setOtherInputControl(currentTarget, value)
+            {
+                if(currentTarget.type === "range")
+                {
+                    let idComponents = currentTarget.id.split("SliderInput"),
+                        numberInputID = idComponents[0] + "NumberInput" + idComponents[1],
+                        numberInputElem = getElem(numberInputID);
+
+                    numberInputElem.value = value;
+                }
+                else if(currentTarget.type === "number")
+                {
+                    let idComponents = currentTarget.id.split("NumberInput"),
+                        sliderInputID = idComponents[0] + "SliderInput" + idComponents[1],
+                        sliderInputElem = getElem(sliderInputID);
+
+                    sliderInputElem.value = value;
+                }
+            }
 
 			function appendCommandRows(table, synthCommands)
 			{
@@ -391,35 +412,38 @@ WebMIDI.host = (function(document)
 					{
 						var
 							tr = document.createElement("tr"),
-							td, input, button;
+                            td, input, button;
 
-						function sendMessageFromInput(numberInput)
+                        function doCommand(command, value)
+                        {
+                            if(command === CMD.AFTERTOUCH)
+                            {
+                                sendAftertouch(value);
+                            }
+                            else // can only be CHANNEL_PRESSURE or PITCHWHEEL
+                            {
+                                sendCommand(command, value);
+                            }
+                        }
+
+						function onCommandInputChanged(event)
 						{
-							var value = numberInput.valueAsNumber;
+                            var currentTarget = event.currentTarget,
+                                value = currentTarget.valueAsNumber,
+                                command = currentTarget.command;
 
-							if(numberInput.command === CMD.AFTERTOUCH)
-							{
-								sendAftertouch(value);
-							}
-							else // can only be CHANNEL_PRESSURE or PITCHWHEEL
-							{
-								sendCommand(numberInput.command, value);
-							}
+                            doCommand(command, value);
+                            setOtherInputControl(currentTarget, value);
 						}
 
-						function onInputChanged(event)
-						{
-							var numberInput = event.currentTarget;
-
-							sendMessageFromInput(numberInput);
-						}
-
-						function onSendAgainButtonClick(event)
+						function onSendCommandAgainButtonClick(event)
 						{
 							var inputID = event.currentTarget.inputID,
-								numberInput = getElem(inputID);
+                                numberInput = getElem(inputID),
+                                value = numberInput.valueAsNumber,
+                                command = numberInput.command;
 
-							sendMessageFromInput(numberInput);
+                            doCommand(command, value);
 						}
 
 						td = document.createElement("td");						
@@ -435,15 +459,16 @@ WebMIDI.host = (function(document)
                         input = document.createElement("input");
                         input.type = "range";
                         input.name = "value";
-                        input.id = "commandNumberInput" + i.toString(10);
+                        input.id = "commandSliderInput" + i.toString(10);
                         input.min = 0;
                         input.max = 127;
                         input.value = WebMIDI.constants.commandDefaultValue(command);
                         input.command = command;
                         input.defaultValue = input.value;
                         input.className = "midiSlider";
-                        input.onchange = onInputChanged;
+                        input.onchange = onCommandInputChanged;
                         td.appendChild(input);
+                        commandInputIDs.push(input.id);
 
                         // number input
 						input = document.createElement("input");
@@ -456,23 +481,22 @@ WebMIDI.host = (function(document)
 						input.command = command;
 						input.defaultValue = input.value;
 						input.className = "number";
-						input.onchange = onInputChanged;
+						input.onchange = onCommandInputChanged;
                         td.appendChild(input);
+                        commandInputIDs.push(input.id);
 
 						button = document.createElement("input");
 						button.type = "button";
 						button.className = "sendAgainButton";
 						button.value = "send again";
 						button.inputID = input.id;
-                        button.onclick = onSendAgainButtonClick;
+                        button.onclick = onSendCommandAgainButtonClick;
                         td.appendChild(button);
 
                         td = document.createElement("td");
                         td.className = "left";
                         td.innerHTML = "Cmd " + command;
-                        tr.appendChild(td);
-
-						commandInputIDs.push(input.id);
+                        tr.appendChild(td);						
 
 						return tr;
 					}
@@ -555,47 +579,31 @@ WebMIDI.host = (function(document)
 							{
 								uniqueControl.defaultValue = nuDefaultValue;
 							}
-							if(nuControl.nItems !== undefined)
-							{
-								uniqueControl.nItems = nuControl.nItems;
-							}
 							return uniqueControl;
 						}
 
 						for(i = 0; i < nonUniqueControls.length; ++i)
 						{
-                            if(synth.name === "CW_MIDISynth")
+							nuControl = nonUniqueControls[i];
+							uniqueControl = uniqueControls.find(ctl => ctl.name === nuControl.name);
+							if(uniqueControl === undefined)
 							{
-								let nonUniqueControl = nonUniqueControls[i]; 
-								nuControl = nonUniqueControl.index;
 								uniqueControl = newUniqueControl(nuControl);
-								uniqueControl.name = nonUniqueControl.name;
-								uniqueControl.defaultValue = nonUniqueControl.defaultValue;
-								uniqueControl.nItems = nonUniqueControl.nItems;
-								uniqueControls.push(uniqueControl);
+								if(uniqueControl.name !== registeredParameterCoarseName)
+								{
+									if(uniqueControl.name === dataEntryCoarseName)
+									{
+										uniqueControl.name = dataEntryCoarseName + " (pitchBendSensitivity)";
+									}
+									uniqueControl.defaultValue = WebMIDI.constants.controlDefaultValue(nuControl)
+									uniqueControls.push(uniqueControl);
+								}
 							}
 							else
 							{
-								nuControl = nonUniqueControls[i];
-								uniqueControl = uniqueControls.find(ctl => ctl.name === nuControl.name);
-								if(uniqueControl === undefined)
-								{
-									uniqueControl = newUniqueControl(nuControl);
-									if(uniqueControl.name !== registeredParameterCoarseName)
-									{
-										if(uniqueControl.name === dataEntryCoarseName)
-										{
-											uniqueControl.name = dataEntryCoarseName + " (pitchBendSensitivity)";
-										}
-										uniqueControl.defaultValue = WebMIDI.constants.controlDefaultValue(nuControl)
-										uniqueControls.push(uniqueControl);
-									}
-								}
-								else
-								{
-									uniqueControl.ccs.push(nuControl);
-								}
+								uniqueControl.ccs.push(nuControl);
 							}
+
 						}
 
 						return uniqueControls;
@@ -620,41 +628,23 @@ WebMIDI.host = (function(document)
 					{
 						var td, input, button;
 
-						function sendMessageFromNumberInput(numberInput)
+						function onControlInputChanged(event)
 						{
-							var
-								value = numberInput.valueAsNumber,
-								uControl = numberInput.uControl;
+                            let currentTarget = event.currentTarget,
+                                value = currentTarget.valueAsNumber,
+                                control = currentTarget.uControl.ccs[0];
 
-							// returns a value in range [0..127] for an index in range [0..nItems-1]
-							function valueFromIndex(index, nItems)
-							{
-								var partitionSize = 127 / nItems;
-
-								return Math.round((partitionSize / 2) + (partitionSize * index));
-							}
-
-							if(uControl.nItems !== undefined)
-							{
-								value = valueFromIndex(value, uControl.nItems);
-							}
-
-							sendLongControl(numberInput.uControl.ccs[0], value);
+                            sendLongControl(control, value);
+                            setOtherInputControl(currentTarget, value);
 						}
 
-						function onInputChanged(event)
-						{
-							var numberInput = event.currentTarget;
-
-							sendMessageFromNumberInput(numberInput);
-						}
-
-						function onSendAgainButtonClick(event)
+						function onSendControlAgainButtonClick(event)
 						{
 							var inputID = event.currentTarget.inputID,
-								numberInput = getElem(inputID);
+                                control = getElem(inputID),
+                                value = control.valueAsNumber;
 
-							sendMessageFromNumberInput(numberInput);
+                            sendLongControl(control, value);
 						}
 
 						td = document.createElement("td");
@@ -675,16 +665,10 @@ WebMIDI.host = (function(document)
                         input.uControl = uControl;
                         input.className = "midiSlider";
                         input.min = 0;
-                        if(uControl.nItems === undefined)
-                        {
-                            input.max = 127;
-                        }
-                        else
-                        {
-                            input.max = uControl.nItems - 1;
-                        }
-                        input.onchange = onInputChanged;
+                        input.max = 127;
+                        input.onchange = onControlInputChanged;
                         td.appendChild(input);
+                        longInputControlIDs.push(input.id);
 
                         // number input
 						input = document.createElement("input");
@@ -694,31 +678,23 @@ WebMIDI.host = (function(document)
 						input.value = uControl.defaultValue;
 						input.uControl = uControl;
 						input.className = "number";
-						input.min = 0;
-						if(uControl.nItems === undefined)
-						{
-							input.max = 127;
-						}
-						else
-						{
-							input.max = uControl.nItems - 1;
-						}
-						input.onchange = onInputChanged;
-						td.appendChild(input);
+                        input.min = 0;
+                        input.max = 127;
+						input.onchange = onControlInputChanged;
+                        td.appendChild(input);
+                        longInputControlIDs.push(input.id);
 
 						button = document.createElement("input");
 						button.type = "button";
 						button.className = "sendAgainButton";
 						button.value = "send again";
 						button.inputID = input.id;
-						button.onclick = onSendAgainButtonClick;
+						button.onclick = onSendControlAgainButtonClick;
 						td.appendChild(button);
 
 						td = document.createElement("td");
 						tr.appendChild(td);
 						td.innerHTML = ccString(uControl.ccs);
-
-						longInputControlIDs.push(input.id);
 
 						return tr;
 					}
