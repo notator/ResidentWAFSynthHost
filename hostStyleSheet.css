@@ -3,10 +3,17 @@ body
 {
     font-family: Lucida Sans Unicode, Verdana, Arial, Geneva, Sans-Serif;
     font-size: 11px; 
-	width: 420px;
+	width: 660px; /* was 420px */
 	margin:30px auto 0 auto;
 	padding:25px;
 	border:1px solid black;
+}
+
+hr
+{
+    border-style: none;
+    height: 4px;
+    background-color: #CCC;
 }
 
 .boldTitle
@@ -35,7 +42,7 @@ body
 .inputDeviceSelect
 {
 	font-size: 11px;
-	width: 300px;
+	width: 180px;
 	height: 18px;
 	margin-left: 0;
 }

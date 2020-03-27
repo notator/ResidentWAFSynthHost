@@ -622,7 +622,7 @@ WebMIDI.host = (function(document)
 					{
 						var td, input, button;
 
-						function sendMessageFromInput(numberInput)
+						function sendMessageFromNumberInput(numberInput)
 						{
 							var
 								value = numberInput.valueAsNumber,
@@ -648,7 +648,7 @@ WebMIDI.host = (function(document)
 						{
 							var numberInput = event.currentTarget;
 
-							sendMessageFromInput(numberInput);
+							sendMessageFromNumberInput(numberInput);
 						}
 
 						function onSendAgainButtonClick(event)
@@ -656,7 +656,7 @@ WebMIDI.host = (function(document)
 							var inputID = event.currentTarget.inputID,
 								numberInput = getElem(inputID);
 
-							sendMessageFromInput(numberInput);
+							sendMessageFromNumberInput(numberInput);
 						}
 
 						td = document.createElement("td");
@@ -665,11 +665,33 @@ WebMIDI.host = (function(document)
 						td.innerHTML = uControl.name;
 
 						td = document.createElement("td");
-						tr.appendChild(td);
+                        tr.appendChild(td);
 
+                        // slider input
+                        // <input type="range" class="midiSlider" id="myRange" min="0" max="127" value="64" />
+                        input = document.createElement("input");
+                        input.type = "range";
+                        input.name = "sliderValue";
+                        input.id = "controlSliderInput" + i.toString(10);
+                        input.value = uControl.defaultValue;
+                        input.uControl = uControl;
+                        input.className = "midiSlider";
+                        input.min = 0;
+                        if(uControl.nItems === undefined)
+                        {
+                            input.max = 127;
+                        }
+                        else
+                        {
+                            input.max = uControl.nItems - 1;
+                        }
+                        input.onchange = onInputChanged;
+                        td.appendChild(input);
+
+                        // number input
 						input = document.createElement("input");
 						input.type = "number";
-						input.name = "value";
+						input.name = "numberValue";
 						input.id = "controlNumberInput" + i.toString(10);
 						input.value = uControl.defaultValue;
 						input.uControl = uControl;

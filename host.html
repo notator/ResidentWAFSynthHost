@@ -10,45 +10,37 @@
     <!-- Javascript files are included at the end of the body element -->
 </head>
 <body>
-    <div id="title">
-        <table style="width:420px">
-            <tr>
-                <td><span class="boldTitle">ResidentWAFSynth Host</span></td>
-                <td style="text-align:right"><input class="smallButton" type="button" value="GitHub" style="width:80px" onclick="WebMIDI.host.gitHubButtonClick()" /></td>
-            </tr>
-        </table>
-    </div>
-    <div id="loadingMsgDiv">
-        <span>&nbsp;loading Web Audio Fonts...</span>
-    </div>
-    <div id="inputDeviceSelectDiv" style="display:none">
-        <hr />
+    <div id="title" style="margin:0;">
         <table>
             <colgroup>
-                <col style="width:75px" />
-                <col />
+                <col style="width:300px;" />
+                <col style="width:225px; text-align:right" />
+                <col style="width:185px;" />
             </colgroup>
             <tr>
-                <td><span class="boldSubtitle">Input Device:</span></td>
+                <td style="padding-left:0"><span class="boldTitle">ResidentWAFSynth Host</span></td>
+                <td style="text-align:right"><span class="boldSubtitle">Input Device:</span></td>
                 <td>
                     <select id="inputDeviceSelect" class="inputDeviceSelect" onchange="WebMIDI.host.onInputDeviceSelectChanged()"></select>
-
                 </td>
             </tr>
-        </table>
-    </div>
-    <div id="synthInfoDiv" style="display:none">
-        <hr />
-        <span class="boldSubtitle">&nbsp;Output Device: ResidentWAFSynth</span>
-        <table>
-            <colgroup>
-                <col style="width:75px" />
-                <col />
-            </colgroup>
             <tr>
-                <td><input class="smallButton" type="button" value="website" onclick="WebMIDI.host.synthWebsiteButtonClick()" /></td>
+                <td style="vertical-align:top" rowspan="2">
+                    <input class="smallButton" type="button" value="GitHub" style="width:80px" onclick="WebMIDI.host.gitHubButtonClick()" />
+                </td>
+                <td style="text-align:right">
+                    <span class="boldSubtitle">Output Device:</span>
+                </td>
                 <td>
-                    <span>multichannel synth -- channel:</span>
+                    <span class="boldSubtitle">ResidentWAFSynth</span>
+                    <input class="smallButton" type="button" value="website" onclick="WebMIDI.host.synthWebsiteButtonClick()" />
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align:right">
+                    <span>synth channel:</span>
+                </td>
+                <td>
                     <select id="channelSelect" class="valueSelector" onchange="WebMIDI.host.onChannelSelectChanged()">
                         <option value="0">0</option>
                         <option value="1">1</option>
@@ -67,12 +59,66 @@
                         <option value="14">14</option>
                         <option value="15">15</option>
                     </select>
+                    <span>(multichannel synth)</span>
                 </td>
             </tr>
         </table>
     </div>
+    <div id="loadingMsgDiv" style="text-align:center;">
+        <span style="color:red">loading Web Audio Fonts...</span>
+    </div>
+    <div id="inputDeviceSelectDiv" style="display:none">
+        <!--<hr />
+    <table>
+        <colgroup>
+            <col style="width:75px" />
+            <col />
+        </colgroup>
+        <tr>
+            <td></td>
 
-    <div id="continueAtStartButtonDiv" style="display:none; text-align:right">
+        </tr>
+    </table>
+            -->
+    </div>
+    <div id="synthInfoDiv" style="display:none">
+        <!--
+    <hr />
+    <span class="boldSubtitle">&nbsp;Output Device: ResidentWAFSynth</span>
+    <table>
+        <colgroup>
+            <col style="width:75px" />
+            <col />
+        </colgroup>
+        <tr>
+            <td><input class="smallButton" type="button" value="website" onclick="WebMIDI.host.synthWebsiteButtonClick()" /></td>
+            <td>
+                <span>multichannel synth -- channel:</span>
+                <select id="channelSelect" class="valueSelector" onchange="WebMIDI.host.onChannelSelectChanged()">
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                    <option value="13">13</option>
+                    <option value="14">14</option>
+                    <option value="15">15</option>
+                </select>
+            </td>
+        </tr>
+    </table>
+        -->
+    </div>
+
+    <div id="continueAtStartButtonDiv" style="text-align:center; display:none;">
         <input class="largeButton" type="button" value="continue" onclick="WebMIDI.host.onContinueAtStartClicked()" />
     </div>
     <div id="webAudioFontDiv" style="display:none">

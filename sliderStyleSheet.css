@@ -2,28 +2,28 @@
     Developed beginning at the following two sites:
     https://www.w3schools.com/howto/tryit.asp?filename=tryhow_css_rangeslider
     https://css-tricks.com/styling-cross-browser-compatible-range-inputs-css/ 
-    The midiSliderDiv and midiSlider classes are to be used in html as follows:
-    <div class="midiSliderDiv">
+    The verticalAlignMiddle and midiSlider classes are to be used in html as follows:
+    <div class="verticalAlignMiddle">
         <input type="range" class="midiSlider" id="myRange" min="0" max="127" value="64">
     </div>
 */
-.midiSliderDiv
+.verticalAlignMiddle
 {
-    width: 266px; /* midiSlider (=track) width + 4 */
-    height: 23px;
-    border-style: solid;
-    border-width: 1px;
-    border-color: #999;
+    vertical-align: middle;
 }
 
 .midiSlider
 {
     -webkit-appearance: none;
     width: 262px; /* (2*127) + thumb width */
-    height: 4px;
+    height: 12px;
     outline: none;
-    background: #BBB;
-    opacity: 0.6;
+    background: #e8e8e8;
+    border-style: solid;
+    border-width: 1px;
+    border-color: #444;
+    vertical-align: middle;
+    opacity: 0.4;
     -webkit-transition: .1s;
     transition: opacity .1s;
 }
@@ -36,23 +36,21 @@
 .midiSlider::-webkit-slider-thumb
 {
     -webkit-appearance: none;
-    width: 7px;
-    height: 12px;
-    background: #777;
-    border-style: solid;
-    border-radius: 4px;
-    border-width: 0;
+    width: 6px;
+    height: 10px;
+    background: #000;
     cursor: pointer;
 }
 
+/* 26.03.20 This firefox style is not working.*/
 .slider::-moz-range-thumb
 {
     width: 7px;
     height: 12px;
     background: #777;
     border-style: solid;
-    border-radius: 4px;
-    border-width: 0;
+    border-radius: 0;
+    border-width: 1px;
+    border-color: #444;
     cursor: pointer;
 }
-
