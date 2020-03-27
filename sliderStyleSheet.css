@@ -17,6 +17,7 @@
     -webkit-appearance: none;
     width: 262px; /* (2*127) + thumb width */
     height: 12px;
+    margin-right: 4px;
     outline: none;
     background: #e8e8e8;
     border-style: solid;

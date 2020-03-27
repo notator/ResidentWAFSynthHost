@@ -60,7 +60,7 @@ hr
 	font-size: 11px;
 	width: 270px;
 	height: 18px;
-	margin-left: 0;
+	margin: 0 4px auto auto;
 }
 
 .valueSelector
@@ -90,6 +90,7 @@ hr
     font-size: 11px;
 	height:18px;
 	width:45px;
+    margin-right:5px;
 }
 
 .smallButton

@@ -223,26 +223,16 @@ WebMIDI.host = (function(document)
 		setCommandsAndControlsDivs = function()
 		{
 			var CMD = WebMIDI.constants.COMMAND,
-				commandsDiv = getElem("commandsDiv"),
-				commandsTable = getElem("commandsTable"),
-				controlsDiv = getElem("controlsDiv"),
+				commandsAndControlsDiv = getElem("commandsAndControlsDiv"),
 				controlsTable = getElem("controlsTable");
 
-			function emptyTables(commandsTable, controlsTable)
-			{
-				var i;
-
-				function empty(table)
-				{
-					for(i = table.childNodes.length - 1; i >= 0; --i)
-					{
-						table.removeChild(table.childNodes[i]);
-					}
-				}
-
-				empty(commandsTable);
-				empty(controlsTable);
-			}
+            function empty(table)
+            {
+                for(let i = table.childNodes.length - 1; i >= 0; --i)
+                {
+                    table.removeChild(table.childNodes[i]);
+                }
+            }
 
 			// sends aftertouch to the notes currently set in the notes controls
 			function sendAftertouch(pressure)
@@ -350,7 +340,7 @@ WebMIDI.host = (function(document)
 			// NOTE_ON MUST be implemented, otherwise the host can't play anything.
 			// The Notes Div is therefore always displayed.
 			// Whether the synth implements NOTE_OFF or not only needs to be determined inside the sendNoteOff function.
-			function hasCommandsDiv(commands)
+			function hasCommands(commands)
 			{
 				var i, rval = false;
 				if(commands !== undefined)
@@ -371,35 +361,24 @@ WebMIDI.host = (function(document)
 				return rval;
 			}
 
-			function appendSoundFontPresetCommandRow(table, presetOptionsArray)
+			function appendPresetSelect(presetSelectCell, presetOptionsArray)
 			{
 				var tr = document.createElement("tr"),
 					td, presetSelect, input;
 
-				table.appendChild(tr);
-
-				td = document.createElement("td");
-				tr.appendChild(td);
-				td.className = "left";
-				td.innerHTML = "preset";
-
-				td = document.createElement("td");
-				tr.appendChild(td);
 				presetSelect = document.createElement("select");
 				presetSelect.id = "presetSelect";
 				presetSelect.className = "presetSelect";
 				setOptions(presetSelect, presetOptionsArray);
 				presetSelect.onchange = onPresetSelectChanged;
-				td.appendChild(presetSelect);
+                presetSelectCell.appendChild(presetSelect);
 
-				td = document.createElement("td");
-				tr.appendChild(td);
 				input = document.createElement("input");
 				input.type = "button";
 				input.className = "sendAgainButton";
 				input.value = "send again";
 				input.onclick = onPresetSelectChanged;
-				td.appendChild(input);
+                presetSelectCell.appendChild(input);
 			}
 
 			function appendCommandRows(table, synthCommands)
@@ -443,14 +422,30 @@ WebMIDI.host = (function(document)
 							sendMessageFromInput(numberInput);
 						}
 
-						td = document.createElement("td");
-						tr.appendChild(td);
+						td = document.createElement("td");						
 						td.className = "left";
-						td.innerHTML = WebMIDI.constants.commandName(command);
+                        td.innerHTML = WebMIDI.constants.commandName(command);
+                        tr.appendChild(td);
 
-						td = document.createElement("td");
-						tr.appendChild(td);
+                        td = document.createElement("td");
+                        tr.appendChild(td);                       
 
+                        // slider input
+                        // <input type="range" class="midiSlider" id="myRange" min="0" max="127" value="64" />
+                        input = document.createElement("input");
+                        input.type = "range";
+                        input.name = "value";
+                        input.id = "commandNumberInput" + i.toString(10);
+                        input.min = 0;
+                        input.max = 127;
+                        input.value = WebMIDI.constants.commandDefaultValue(command);
+                        input.command = command;
+                        input.defaultValue = input.value;
+                        input.className = "midiSlider";
+                        input.onchange = onInputChanged;
+                        td.appendChild(input);
+
+                        // number input
 						input = document.createElement("input");
 						input.type = "number";
 						input.name = "value";
@@ -462,15 +457,20 @@ WebMIDI.host = (function(document)
 						input.defaultValue = input.value;
 						input.className = "number";
 						input.onchange = onInputChanged;
-						td.appendChild(input);
+                        td.appendChild(input);
 
 						button = document.createElement("input");
 						button.type = "button";
 						button.className = "sendAgainButton";
 						button.value = "send again";
 						button.inputID = input.id;
-						button.onclick = onSendAgainButtonClick;
-						td.appendChild(button);
+                        button.onclick = onSendAgainButtonClick;
+                        td.appendChild(button);
+
+                        td = document.createElement("td");
+                        td.className = "left";
+                        td.innerHTML = "Cmd " + command;
+                        tr.appendChild(td);
 
 						commandInputIDs.push(input.id);
 
@@ -510,11 +510,9 @@ WebMIDI.host = (function(document)
 					if(command === CMD.PRESET)
                     {
                         console.assert(synth.name === "ResidentWAFSynth", "Error: This app only uses the residentWAFSynth.");
-
-						appendSoundFontPresetCommandRow(commandsTable, webAudioFontSelect[webAudioFontSelect.selectedIndex].presetOptionsArray);
+                        let presetSelectCell = getElem("presetSelectCell")
+                        appendPresetSelect(presetSelectCell, webAudioFontSelect[webAudioFontSelect.selectedIndex].presetOptionsArray);
 						onWebAudioFontSelectChanged();
-
-						row++;
 					}
 					else if(command === CMD.CHANNEL_PRESSURE || command === CMD.PITCHWHEEL || command === CMD.AFTERTOUCH)
 					{
@@ -750,13 +748,10 @@ WebMIDI.host = (function(document)
 						button.value = "send";
 						button.uControl = uControl;
 						button.onclick = onSendShortControlButtonClick;
-						//button.style.marginLeft = "4px";
-						//button.style.marginRight = "4px";
 						td.appendChild(button);
 
-						td = document.createElement("td");
-						tr.appendChild(td);
-						td.innerHTML = ccString(uControl.ccs);
+                        let node = document.createTextNode(ccString(uControl.ccs));
+                        td.appendChild(node);
 					}
 
 					uControls = getUniqueControls(controls);
@@ -793,33 +788,14 @@ WebMIDI.host = (function(document)
 			commandInputIDs.length = 0;
 			longInputControlIDs.length = 0;
 
-			emptyTables(commandsTable, controlsTable);
+            empty(controlsTable);
 
-			if(hasCommandsDiv(synth.commands))
-			{
-				commandsDiv.style.display = "block";
-				commandsTable.style.display = "table";
+            commandsAndControlsDiv.style.display = "block";
+            controlsTable.style.display = "table";
 
-				appendCommandRows(commandsTable, synth.commands);
-			}
-			else
-			{
-				commandsDiv.style.display = "none";
-				commandsTable.style.display = "none";
-			}
+			appendCommandRows(controlsTable, synth.commands);
 
-			if(synth.controls !== undefined && synth.controls.length > 0)
-			{
-				controlsDiv.style.display = "block";
-				controlsTable.style.display = "table";
-
-				appendControlRows(controlsTable, synth.controls);
-			}
-			else
-			{
-				controlsDiv.style.display = "none";
-				controlsTable.style.display = "none";
-			}
+			appendControlRows(controlsTable, synth.controls);
 
 			sendShortControl(WebMIDI.constants.CONTROL.ALL_CONTROLLERS_OFF);
 		},
@@ -1106,8 +1082,7 @@ WebMIDI.host = (function(document)
                 getElem("continueAtStartButtonDiv").style.display = "block";
 
                 getElem("webAudioFontDiv").style.display = "none";
-                getElem("commandsDiv").style.display = "none";
-                getElem("controlsDiv").style.display = "none";
+                getElem("commandsAndControlsDiv").style.display = "none";
                 getElem("noteDiv1").style.display = "none";
                 getElem("notesDiv2").style.display = "none";
             }

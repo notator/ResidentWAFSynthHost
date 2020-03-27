@@ -10,7 +10,7 @@
     <!-- Javascript files are included at the end of the body element -->
 </head>
 <body>
-    <div id="title" style="margin:0;">
+    <div id="topDiv" style="margin:0;">
         <table>
             <colgroup>
                 <col style="width:300px;" />
@@ -65,11 +65,13 @@
         </table>
     </div>
 
-    <div id="loadingMsgDiv" style="text-align:center;">
-        <span style="color:red">loading Web Audio Fonts...</span>
-    </div>
-    <div id="continueAtStartButtonDiv" style="text-align:center; display:none;">
-        <input class="largeButton" type="button" value="continue" onclick="WebMIDI.host.onContinueAtStartClicked()" />
+    <div id="startupDivs">
+        <div id="loadingMsgDiv" style="text-align:center;">
+            <span style="color:red">loading Web Audio Fonts...</span>
+        </div>
+        <div id="continueAtStartButtonDiv" style="text-align:center; display:none;">
+            <input class="largeButton" type="button" value="continue" onclick="WebMIDI.host.onContinueAtStartClicked()" />
+        </div>
     </div>
 
     <div id="webAudioFontDiv" style="display:none">
@@ -80,24 +82,30 @@
                 <col />
             </colgroup>
             <tr>
-                <td><span class="boldSubtitle">WebAudioFont: </span></td>
                 <td>
-                    <select id="webAudioFontSelect" class="webAudioFontSelect" onchange="WebMIDI.host.onWebAudioFontSelectChanged()" />
+                    <span class="boldSubtitle">WebAudioFont: </span>
+                    <!--<input class="smallButton" type="button" value="website" onclick="WebMIDI.host.soundFontWebsiteButtonClick()" />-->
+                </td>
+                <td>
+                    <span class="boldSubtitle">preset: </span>
                 </td>
             </tr>
             <tr>
-                <td><input class="smallButton" type="button" value="website" onclick="WebMIDI.host.soundFontWebsiteButtonClick()" /></td>
+                <td>                    
+                    <select id="webAudioFontSelect" class="webAudioFontSelect" onchange="WebMIDI.host.onWebAudioFontSelectChanged()" />
+                </td>
+                <td id="presetSelectCell">
+                    <!--
+                        <select id="presetSelect" class="presetSelect" onchange="WebMIDI.host.onPresetSelectChanged()" />
+                        sendAgainButton
+                    -->
+                </td>
             </tr>
         </table>
     </div>
-    <div id="commandsDiv" style="display:none">
+    <div id="commandsAndControlsDiv" style="display:none">
         <hr />
-        <span class="boldSubtitle">Commands:</span>
-        <table id="commandsTable" class="midiMessagesTable"></table>
-    </div>
-    <div id="controlsDiv" style="display:none">
-        <hr />
-        <span class="boldSubtitle">Controls:</span>
+        <span class="boldSubtitle">Commands and Controls:</span>
         <table id="controlsTable" class="midiMessagesTable"></table>
     </div>
     <div id="noteDiv1" style="display:none">
