@@ -400,18 +400,14 @@ WebMIDI.host = (function(document)
                 }
             }
 
-			function appendCommandRows(table, synthCommands)
-			{
-				function appendCommandRow(table, command, i)
-				{
-					var tr;
-
-					function getCommandRow(command, i)
-					{
-						var
-							tr = document.createElement("tr"),
-                            td, input, button;
-
+            function appendCommandRows(table, commands)
+            {
+                // sets the presetSelect and 
+                // returns an array of tr elements
+                function getCommandRows(cmdIndices)
+                {
+                    function setCommandRow(tr, name, defaultValue, cmdIndex, i)
+                    {
                         function doCommand(command, value)
                         {
                             if(command === CMD.AFTERTOUCH)
@@ -424,124 +420,113 @@ WebMIDI.host = (function(document)
                             }
                         }
 
-						function onCommandInputChanged(event)
-						{
+                        function onCommandInputChanged(event)
+                        {
                             var currentTarget = event.currentTarget,
                                 value = currentTarget.valueAsNumber,
-                                command = currentTarget.command;
+                                cmdIndex = currentTarget.cmdIndex;
 
-                            doCommand(command, value);
+                            doCommand(cmdIndex, value);
                             setOtherInputControl(currentTarget, value);
-						}
+                        }
 
-						function onSendCommandAgainButtonClick(event)
-						{
-							var inputID = event.currentTarget.inputID,
-                                numberInput = getElem(inputID),
-                                value = numberInput.valueAsNumber,
-                                command = numberInput.command;
+                        function onSendCommandAgainButtonClick(event)
+                        {
+                            var numberInputElem = event.currentTarget.numberInputElem,
+                                value = numberInputElem.valueAsNumber,
+                                cmdIndex = numberInputElem.cmdIndex;
 
-                            doCommand(command, value);
-						}
+                            doCommand(cmdIndex, value);
+                        }
 
-						td = document.createElement("td");						
-						td.className = "left";
-                        td.innerHTML = WebMIDI.constants.commandName(command);
-                        tr.appendChild(td);
+                        let td, input, button;
 
                         td = document.createElement("td");
-                        tr.appendChild(td);                       
+                        tr.appendChild(td);
+                        td.className = "left";
+                        td.innerHTML = name;
+
+                        // this td contains the slider, number and button inputs
+                        td = document.createElement("td");
+                        tr.appendChild(td);
 
                         // slider input
                         // <input type="range" class="midiSlider" id="myRange" min="0" max="127" value="64" />
                         input = document.createElement("input");
                         input.type = "range";
-                        input.name = "value";
+                        input.className = "midiSlider";
                         input.id = "commandSliderInput" + i.toString(10);
+                        input.value = defaultValue;
+                        input.defaultValue = defaultValue;
+                        input.cmdIndex = cmdIndex;
                         input.min = 0;
                         input.max = 127;
-                        input.value = WebMIDI.constants.commandDefaultValue(command);
-                        input.command = command;
-                        input.defaultValue = input.value;
-                        input.className = "midiSlider";
                         input.onchange = onCommandInputChanged;
                         td.appendChild(input);
                         commandInputElems.push(input);
 
                         // number input
-						input = document.createElement("input");
-						input.type = "number";
-						input.name = "value";
-						input.id = "commandNumberInput" + i.toString(10);
-						input.min = 0;
-						input.max = 127;
-						input.value = WebMIDI.constants.commandDefaultValue(command);
-						input.command = command;
-						input.defaultValue = input.value;
-						input.className = "number";
-						input.onchange = onCommandInputChanged;
+                        input = document.createElement("input");
+                        input.type = "number";
+                        input.className = "number";
+                        input.id = "commandNumberInput" + i.toString(10);
+                        input.value = defaultValue;
+                        input.defaultValue = defaultValue;
+                        input.cmdIndex = cmdIndex;
+                        input.min = 0;
+                        input.max = 127;
+                        input.onchange = onCommandInputChanged;
                         td.appendChild(input);
                         commandInputElems.push(input);
 
-						button = document.createElement("input");
-						button.type = "button";
-						button.className = "sendAgainButton";
-						button.value = "send again";
-						button.inputID = input.id;
+                        button = document.createElement("input");
+                        button.type = "button";
+                        button.className = "sendAgainButton";
+                        button.value = "send again";
+                        button.numberInputElem = input;
                         button.onclick = onSendCommandAgainButtonClick;
                         td.appendChild(button);
 
                         td = document.createElement("td");
-                        td.className = "left";
-                        td.innerHTML = "Cmd " + command;
-                        tr.appendChild(td);						
+                        tr.appendChild(td);
+                        td.innerHTML = "Cmd " + cmdIndex.toString();
 
-						return tr;
-					}
+                    }
 
-					// These are the only commands that need handling here.
-					switch(command)
-					{
-						case CMD.PRESET:
-							tr = getCommandRow(CMD.PRESET, i);
-							break;
-						case CMD.CHANNEL_PRESSURE:
-							tr = getCommandRow(CMD.CHANNEL_PRESSURE, i);
-							break;
-						case CMD.PITCHWHEEL:
-							tr = getCommandRow(CMD.PITCHWHEEL, i);
-							break;
-						case CMD.AFTERTOUCH:
-							tr = getCommandRow(CMD.AFTERTOUCH, i);
-							break;
-						default:
-							break;
-					}
-					if(tr !== undefined)
-					{
-						table.appendChild(tr);
-					}
-				}
-
-				let webAudioFontSelect = getElem("webAudioFontSelect"),
-					command, row = 0;
-
-				for(let i = 0; i < synthCommands.length; ++i)
-				{
-					command = synthCommands[i];
-					if(command === CMD.PRESET)
+                    let tr, rval = [];
+                    for(let i = 0; i < cmdIndices.length; ++i)
                     {
-                        console.assert(synth.name === "ResidentWAFSynth", "Error: This app only uses the residentWAFSynth.");
-                        let presetSelectCell = getElem("presetSelectCell")
-                        appendPresetSelect(presetSelectCell, webAudioFontSelect[webAudioFontSelect.selectedIndex].presetOptionsArray);
-						onWebAudioFontSelectChanged();
-					}
-					else if(command === CMD.CHANNEL_PRESSURE || command === CMD.PITCHWHEEL || command === CMD.AFTERTOUCH)
-					{
-						appendCommandRow(table, synthCommands[i], row++);
-					}
-				}
-			}
+                        let c = WebMIDI.constants,
+                            cmdIndex = cmdIndices[i],
+                            name = c.commandName(cmdIndex),
+                            defaultValue = c.commandDefaultValue(cmdIndex);
+
+                        if(cmdIndex === CMD.PRESET)
+                        {
+                            console.assert(synth.name === "ResidentWAFSynth", "Error: This app only uses the residentWAFSynth.");
+                            let presetSelectCell = getElem("presetSelectCell")
+                            appendPresetSelect(presetSelectCell, webAudioFontSelect[webAudioFontSelect.selectedIndex].presetOptionsArray);
+                            onWebAudioFontSelectChanged();
+                        }
+                        else if(cmdIndex === CMD.CHANNEL_PRESSURE || cmdIndex === CMD.PITCHWHEEL || cmdIndex === CMD.AFTERTOUCH)
+                        {
+                            tr = document.createElement("tr")
+                            rval.push(tr);
+                            setCommandRow(tr, name, defaultValue, cmdIndex, i);
+                        }
+                    }
+
+                    return rval;
+                }
+
+                let commandRows = getCommandRows(commands);
+
+                for(let i = 0; i < commandRows.length; ++i)
+                {
+                    let tr = commandRows[i];
+                    table.appendChild(tr);
+                }
+            }
 
 			function appendControlRows(table, controls)
 			{
@@ -678,7 +663,7 @@ WebMIDI.host = (function(document)
                             {
                                 if(ccIndex === c.CONTROL.DATA_ENTRY_COARSE)
                                 {
-                                    name = name + " (pitchwheel range)";
+                                    name = name + " (pitchWheel range)";
                                 }
                                 setLongControlRow(tr, name, defaultValue, ccIndex, i);
 							}
