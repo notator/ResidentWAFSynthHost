@@ -380,24 +380,9 @@ WebMIDI.host = (function(document)
             }
 
             // called by both commands and CCs
-            function setOtherInputControl(currentTarget, value)
+            function setTwinInputControl(currentTarget, value)
             {
-                if(currentTarget.type === "range")
-                {
-                    let idComponents = currentTarget.id.split("SliderInput"),
-                        numberInputID = idComponents[0] + "NumberInput" + idComponents[1],
-                        numberInputElem = getElem(numberInputID);
-
-                    numberInputElem.value = value;
-                }
-                else if(currentTarget.type === "number")
-                {
-                    let idComponents = currentTarget.id.split("NumberInput"),
-                        sliderInputID = idComponents[0] + "SliderInput" + idComponents[1],
-                        sliderInputElem = getElem(sliderInputID);
-
-                    sliderInputElem.value = value;
-                }
+                currentTarget.twinInputElem.value = value;
             }
 
             function appendCommandRows(table, commands)
@@ -406,7 +391,7 @@ WebMIDI.host = (function(document)
                 // returns an array of tr elements
                 function getCommandRows(cmdIndices)
                 {
-                    function setCommandRow(tr, name, defaultValue, cmdIndex, i)
+                    function setCommandRow(tr, name, defaultValue, cmdIndex)
                     {
                         function doCommand(command, value)
                         {
@@ -427,7 +412,7 @@ WebMIDI.host = (function(document)
                                 cmdIndex = currentTarget.cmdIndex;
 
                             doCommand(cmdIndex, value);
-                            setOtherInputControl(currentTarget, value);
+                            setTwinInputControl(currentTarget, value);
                         }
 
                         function onSendCommandAgainButtonClick(event)
@@ -439,58 +424,73 @@ WebMIDI.host = (function(document)
                             doCommand(cmdIndex, value);
                         }
 
-                        let td, input, button;
+                        function setBasicRow(tr, name, defaultValue, infoString)
+                        {
+                            let td, rangeInputElem, numberInputElem, buttonInputElem;
 
-                        td = document.createElement("td");
-                        tr.appendChild(td);
-                        td.className = "left";
-                        td.innerHTML = name;
+                            td = document.createElement("td");
+                            tr.appendChild(td);
+                            td.className = "left";
+                            td.innerHTML = name;
 
-                        // this td contains the slider, number and button inputs
-                        td = document.createElement("td");
-                        tr.appendChild(td);
+                            // this td contains the slider, number and button inputs
+                            td = document.createElement("td");
+                            tr.appendChild(td);
 
-                        // slider input
-                        // <input type="range" class="midiSlider" id="myRange" min="0" max="127" value="64" />
-                        input = document.createElement("input");
-                        input.type = "range";
-                        input.className = "midiSlider";
-                        input.id = "commandSliderInput" + i.toString(10);
-                        input.value = defaultValue;
-                        input.defaultValue = defaultValue;
-                        input.cmdIndex = cmdIndex;
-                        input.min = 0;
-                        input.max = 127;
-                        input.onchange = onCommandInputChanged;
-                        td.appendChild(input);
-                        commandInputElems.push(input);
+                            rangeInputElem = document.createElement("input");
+                            numberInputElem = document.createElement("input");
+                            buttonInputElem = document.createElement("input");
+                            td.appendChild(rangeInputElem);
+                            td.appendChild(numberInputElem);
+                            td.appendChild(buttonInputElem);
 
-                        // number input
-                        input = document.createElement("input");
-                        input.type = "number";
-                        input.className = "number";
-                        input.id = "commandNumberInput" + i.toString(10);
-                        input.value = defaultValue;
-                        input.defaultValue = defaultValue;
-                        input.cmdIndex = cmdIndex;
-                        input.min = 0;
-                        input.max = 127;
-                        input.onchange = onCommandInputChanged;
-                        td.appendChild(input);
-                        commandInputElems.push(input);
+                            // slider input                        
+                            rangeInputElem.type = "range";
+                            rangeInputElem.className = "midiSlider";
+                            rangeInputElem.twinInputElem = numberInputElem;
+                            rangeInputElem.value = defaultValue;
+                            rangeInputElem.defaultValue = defaultValue;
+                            rangeInputElem.min = 0;
+                            rangeInputElem.max = 127;
+                            //rangeInputElem.cmdIndex = cmdIndex;  // rangeInputElem.ccIndex = ccIndex;
+                            //rangeInputElem.onchange = onCommandInputChanged; // onControlInputChanged;
 
-                        button = document.createElement("input");
-                        button.type = "button";
-                        button.className = "sendAgainButton";
-                        button.value = "send again";
-                        button.numberInputElem = input;
-                        button.onclick = onSendCommandAgainButtonClick;
-                        td.appendChild(button);
+                            // number input                        
+                            numberInputElem.type = "number";
+                            numberInputElem.className = "number";
+                            numberInputElem.twinInputElem = rangeInputElem;
+                            numberInputElem.value = defaultValue;
+                            numberInputElem.defaultValue = defaultValue;
+                            numberInputElem.min = 0;
+                            numberInputElem.max = 127;
+                            //numberInputElem.cmdIndex = cmdIndex;  // rangeInputElem.ccIndex = ccIndex;
+                            //numberInputElem.onchange = onCommandInputChanged; // onControlInputChanged;
 
-                        td = document.createElement("td");
-                        tr.appendChild(td);
-                        td.innerHTML = "Cmd " + cmdIndex.toString();
+                            // button input
+                            buttonInputElem.type = "button";
+                            buttonInputElem.className = "sendAgainButton";
+                            buttonInputElem.value = "send again";
+                            buttonInputElem.numberInputElem = numberInputElem;
+                            buttonInputElem.onclick = onSendCommandAgainButtonClick; // onSendControlAgainButtonClick;
 
+                            td = document.createElement("td");
+                            tr.appendChild(td);
+                            td.innerHTML = infoString;
+
+                            commandInputElems.push(rangeInputElem); // controlInputElems.push(rangeInputElem);
+                            commandInputElems.push(numberInputElem); // controlInputElems.push(rangeInputElem);
+
+                            return { rangeInputElem, numberInputElem, buttonInputElem}
+                        }
+
+                        let basicRow = setBasicRow(tr, name, defaultValue, "Cmd " + cmdIndex.toString());
+
+                        basicRow.rangeInputElem.cmdIndex = cmdIndex;
+                        basicRow.rangeInputElem.onchange = onCommandInputChanged;
+                        basicRow.numberInputElem.cmdIndex = cmdIndex;
+                        basicRow.numberInputElem.onchange = onCommandInputChanged;
+                        basicRow.buttonInputElem.onclick = onSendCommandAgainButtonClick;
+                        
                     }
 
                     let tr, rval = [];
@@ -512,7 +512,7 @@ WebMIDI.host = (function(document)
                         {
                             tr = document.createElement("tr")
                             rval.push(tr);
-                            setCommandRow(tr, name, defaultValue, cmdIndex, i);
+                            setCommandRow(tr, name, defaultValue, cmdIndex);
                         }
                     }
 
@@ -543,7 +543,7 @@ WebMIDI.host = (function(document)
                                 value = currentTarget.valueAsNumber;
 
                             sendLongControl(ccIndex, value);
-                            setOtherInputControl(currentTarget, value);
+                            setTwinInputControl(currentTarget, value);
 						}
 
 						function onSendControlAgainButtonClick(event)
@@ -555,7 +555,7 @@ WebMIDI.host = (function(document)
                             sendLongControl(ccIndex, value);
                         }
 
-                        let td, input, button;
+                        let td, rangeInputElem, numberInputElem, buttonInputElem;
 
 						td = document.createElement("td");
 						tr.appendChild(td);
@@ -566,46 +566,48 @@ WebMIDI.host = (function(document)
 						td = document.createElement("td");
                         tr.appendChild(td);
 
+                        rangeInputElem = document.createElement("input");
+                        numberInputElem = document.createElement("input");
+                        buttonInputElem = document.createElement("input");
+                        td.appendChild(rangeInputElem);
+                        td.appendChild(numberInputElem);
+                        td.appendChild(buttonInputElem);
+
                         // slider input
-                        // <input type="range" class="midiSlider" id="myRange" min="0" max="127" value="64" />
-                        input = document.createElement("input");
-                        input.type = "range";
-                        input.className = "midiSlider";
-                        input.id = "controlSliderInput" + i.toString(10);
-                        input.value = defaultValue;
-                        input.defaultValue = defaultValue;
-                        input.ccIndex = ccIndex;
-                        input.min = 0;
-                        input.max = 127;
-                        input.onchange = onControlInputChanged;
-                        td.appendChild(input);
-                        controlInputElems.push(input);
+                        rangeInputElem.type = "range";
+                        rangeInputElem.className = "midiSlider";
+                        rangeInputElem.twinInputElem = numberInputElem;
+                        rangeInputElem.value = defaultValue;
+                        rangeInputElem.defaultValue = defaultValue;
+                        rangeInputElem.min = 0;
+                        rangeInputElem.max = 127;
+                        rangeInputElem.ccIndex = ccIndex;   // rangeInputElem.cmdIndex = cmdIndex;
+                        rangeInputElem.onchange = onControlInputChanged; // onCommandInputChanged                        
 
                         // number input
-						input = document.createElement("input");
-						input.type = "number";
-                        input.className = "number";
-                        input.id = "controlNumberInput" + i.toString(10);
-						input.value = defaultValue;
-                        input.defaultValue = defaultValue;
-                        input.ccIndex = ccIndex;
-                        input.min = 0;
-                        input.max = 127;
-						input.onchange = onControlInputChanged;
-                        td.appendChild(input);
-                        controlInputElems.push(input);
+						numberInputElem.type = "number";
+                        numberInputElem.className = "number";
+                        numberInputElem.twinInputElem = rangeInputElem;
+						numberInputElem.value = defaultValue;
+                        numberInputElem.defaultValue = defaultValue;
+                        numberInputElem.min = 0;
+                        numberInputElem.max = 127;
+                        numberInputElem.ccIndex = ccIndex; // rangeInputElem.cmdIndex = cmdIndex;
+                        numberInputElem.onchange = onControlInputChanged; // onCommandInputChanged 
 
-						button = document.createElement("input");
-						button.type = "button";
-						button.className = "sendAgainButton";
-						button.value = "send again";
-						button.numberInputElem = input;
-						button.onclick = onSendControlAgainButtonClick;
-						td.appendChild(button);
+                        // button input
+						buttonInputElem.type = "button";
+						buttonInputElem.className = "sendAgainButton";
+						buttonInputElem.value = "send again";
+                        buttonInputElem.numberInputElem = numberInputElem;
+                        buttonInputElem.onclick = onSendControlAgainButtonClick; // onSendCommandAgainButtonClick;
 
 						td = document.createElement("td");
 						tr.appendChild(td);
                         td.innerHTML = "CC " + ccIndex.toString();
+
+                        controlInputElems.push(rangeInputElem); // commandInputElems.push(rangeInputElem);
+                        controlInputElems.push(numberInputElem); // commandInputElems.push(numberInputElem);
                     }
 
 					// 2-byte uControls
