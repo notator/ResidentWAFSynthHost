@@ -430,7 +430,7 @@ WebMIDI.host = (function(document)
                 allRangeAndNumberInputElems.push(rangeInputElem);
                 allRangeAndNumberInputElems.push(numberInputElem);
 
-                return { rangeInputElem, numberInputElem, buttonInputElem }
+                return { rangeInputElem, numberInputElem, buttonInputElem };
             }
 
             function appendCommandRows(table, commands)
