@@ -551,8 +551,6 @@ WebMIDI.host = (function(document)
 					// 3-byte controls
 					function setLongControlRow(tr, name, defaultValue, ccIndex, i)
 					{
-						var td, input, button;
-
 						function onControlInputChanged(event)
 						{
                             let currentTarget = event.currentTarget,                                
@@ -570,13 +568,16 @@ WebMIDI.host = (function(document)
                                 value = numberInputElem.valueAsNumber;
 
                             sendLongControl(ccIndex, value);
-						}
+                        }
+
+                        let td, input, button;
 
 						td = document.createElement("td");
 						tr.appendChild(td);
 						td.className = "left";
 						td.innerHTML = name;
 
+                        // this td contains the slider, number and button inputs
 						td = document.createElement("td");
                         tr.appendChild(td);
 
@@ -584,11 +585,11 @@ WebMIDI.host = (function(document)
                         // <input type="range" class="midiSlider" id="myRange" min="0" max="127" value="64" />
                         input = document.createElement("input");
                         input.type = "range";
+                        input.className = "midiSlider";
                         input.id = "controlSliderInput" + i.toString(10);
                         input.value = defaultValue;
                         input.defaultValue = defaultValue;
                         input.ccIndex = ccIndex;
-                        input.className = "midiSlider";
                         input.min = 0;
                         input.max = 127;
                         input.onchange = onControlInputChanged;
@@ -598,11 +599,11 @@ WebMIDI.host = (function(document)
                         // number input
 						input = document.createElement("input");
 						input.type = "number";
-						input.id = "controlNumberInput" + i.toString(10);
+                        input.className = "number";
+                        input.id = "controlNumberInput" + i.toString(10);
 						input.value = defaultValue;
                         input.defaultValue = defaultValue;
                         input.ccIndex = ccIndex;
-						input.className = "number";
                         input.min = 0;
                         input.max = 127;
 						input.onchange = onControlInputChanged;
@@ -620,8 +621,6 @@ WebMIDI.host = (function(document)
 						td = document.createElement("td");
 						tr.appendChild(td);
                         td.innerHTML = "CC " + ccIndex.toString();
-
-						return tr;
                     }
 
 					// 2-byte uControls
