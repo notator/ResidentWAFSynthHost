@@ -20,8 +20,7 @@ WebMIDI.host = (function(document)
     var
         synth = new WebMIDI.residentWAFSynth.ResidentWAFSynth(),
         inputDevice = null,
-        commandInputElems = [], // used by AllControllersOff control
-        controlInputElems = [], // used by AllControllersOff control
+        allRangeAndNumberInputElems = [], // used by AllControllersOff control
 
         getElem = function(elemID)
         {
@@ -281,15 +280,9 @@ WebMIDI.host = (function(document)
 						presetSelect.selectedIndex = 0;
 					}
 
-					for(i = 0; i < commandInputElems.length; ++i)
+					for(i = 0; i < allRangeAndNumberInputElems.length; ++i)
                     {
-                        let inputControl = commandInputElems[i];
-                        inputControl.value = inputControl.defaultValue;
-					}
-
-					for(i = 0; i < controlInputElems.length; ++i)
-                    {
-                        let inputControl = controlInputElems[i];
+                        let inputControl = allRangeAndNumberInputElems[i];
                         inputControl.value = inputControl.defaultValue;
 					}
 				}
@@ -385,6 +378,61 @@ WebMIDI.host = (function(document)
                 currentTarget.twinInputElem.value = value;
             }
 
+            // called by both commands and CCs
+            function setBasicRow(tr, name, defaultValue, infoString)
+            {
+                let td, rangeInputElem, numberInputElem, buttonInputElem;
+
+                td = document.createElement("td");
+                tr.appendChild(td);
+                td.className = "left";
+                td.innerHTML = name;
+
+                // this td contains the slider, number and button inputs
+                td = document.createElement("td");
+                tr.appendChild(td);
+
+                rangeInputElem = document.createElement("input");
+                numberInputElem = document.createElement("input");
+                buttonInputElem = document.createElement("input");
+                td.appendChild(rangeInputElem);
+                td.appendChild(numberInputElem);
+                td.appendChild(buttonInputElem);
+
+                // slider input                        
+                rangeInputElem.type = "range";
+                rangeInputElem.className = "midiSlider";
+                rangeInputElem.twinInputElem = numberInputElem;
+                rangeInputElem.value = defaultValue;
+                rangeInputElem.defaultValue = defaultValue;
+                rangeInputElem.min = 0;
+                rangeInputElem.max = 127;
+
+                // number input                        
+                numberInputElem.type = "number";
+                numberInputElem.className = "number";
+                numberInputElem.twinInputElem = rangeInputElem;
+                numberInputElem.value = defaultValue;
+                numberInputElem.defaultValue = defaultValue;
+                numberInputElem.min = 0;
+                numberInputElem.max = 127;
+
+                // button input
+                buttonInputElem.type = "button";
+                buttonInputElem.className = "sendAgainButton";
+                buttonInputElem.value = "send again";
+                buttonInputElem.numberInputElem = numberInputElem;
+
+                td = document.createElement("td");
+                tr.appendChild(td);
+                td.innerHTML = infoString;
+
+                allRangeAndNumberInputElems.push(rangeInputElem);
+                allRangeAndNumberInputElems.push(numberInputElem);
+
+                return { rangeInputElem, numberInputElem, buttonInputElem }
+            }
+
             function appendCommandRows(table, commands)
             {
                 // sets the presetSelect and 
@@ -424,73 +472,13 @@ WebMIDI.host = (function(document)
                             doCommand(cmdIndex, value);
                         }
 
-                        function setBasicRow(tr, name, defaultValue, infoString)
-                        {
-                            let td, rangeInputElem, numberInputElem, buttonInputElem;
-
-                            td = document.createElement("td");
-                            tr.appendChild(td);
-                            td.className = "left";
-                            td.innerHTML = name;
-
-                            // this td contains the slider, number and button inputs
-                            td = document.createElement("td");
-                            tr.appendChild(td);
-
-                            rangeInputElem = document.createElement("input");
-                            numberInputElem = document.createElement("input");
-                            buttonInputElem = document.createElement("input");
-                            td.appendChild(rangeInputElem);
-                            td.appendChild(numberInputElem);
-                            td.appendChild(buttonInputElem);
-
-                            // slider input                        
-                            rangeInputElem.type = "range";
-                            rangeInputElem.className = "midiSlider";
-                            rangeInputElem.twinInputElem = numberInputElem;
-                            rangeInputElem.value = defaultValue;
-                            rangeInputElem.defaultValue = defaultValue;
-                            rangeInputElem.min = 0;
-                            rangeInputElem.max = 127;
-                            //rangeInputElem.cmdIndex = cmdIndex;  // rangeInputElem.ccIndex = ccIndex;
-                            //rangeInputElem.onchange = onCommandInputChanged; // onControlInputChanged;
-
-                            // number input                        
-                            numberInputElem.type = "number";
-                            numberInputElem.className = "number";
-                            numberInputElem.twinInputElem = rangeInputElem;
-                            numberInputElem.value = defaultValue;
-                            numberInputElem.defaultValue = defaultValue;
-                            numberInputElem.min = 0;
-                            numberInputElem.max = 127;
-                            //numberInputElem.cmdIndex = cmdIndex;  // rangeInputElem.ccIndex = ccIndex;
-                            //numberInputElem.onchange = onCommandInputChanged; // onControlInputChanged;
-
-                            // button input
-                            buttonInputElem.type = "button";
-                            buttonInputElem.className = "sendAgainButton";
-                            buttonInputElem.value = "send again";
-                            buttonInputElem.numberInputElem = numberInputElem;
-                            buttonInputElem.onclick = onSendCommandAgainButtonClick; // onSendControlAgainButtonClick;
-
-                            td = document.createElement("td");
-                            tr.appendChild(td);
-                            td.innerHTML = infoString;
-
-                            commandInputElems.push(rangeInputElem); // controlInputElems.push(rangeInputElem);
-                            commandInputElems.push(numberInputElem); // controlInputElems.push(rangeInputElem);
-
-                            return { rangeInputElem, numberInputElem, buttonInputElem}
-                        }
-
                         let basicRow = setBasicRow(tr, name, defaultValue, "Cmd " + cmdIndex.toString());
 
                         basicRow.rangeInputElem.cmdIndex = cmdIndex;
                         basicRow.rangeInputElem.onchange = onCommandInputChanged;
                         basicRow.numberInputElem.cmdIndex = cmdIndex;
                         basicRow.numberInputElem.onchange = onCommandInputChanged;
-                        basicRow.buttonInputElem.onclick = onSendCommandAgainButtonClick;
-                        
+                        basicRow.buttonInputElem.onclick = onSendCommandAgainButtonClick;                        
                     }
 
                     let tr, rval = [];
@@ -534,7 +522,7 @@ WebMIDI.host = (function(document)
 				function getControlRows(ccIndices)
 				{
 					// 3-byte controls
-					function setLongControlRow(tr, name, defaultValue, ccIndex, i)
+					function setLongControlRow(tr, name, defaultValue, ccIndex)
 					{
 						function onControlInputChanged(event)
 						{
@@ -555,59 +543,13 @@ WebMIDI.host = (function(document)
                             sendLongControl(ccIndex, value);
                         }
 
-                        let td, rangeInputElem, numberInputElem, buttonInputElem;
+                        let basicRow = setBasicRow(tr, name, defaultValue, "CC " + ccIndex.toString());
 
-						td = document.createElement("td");
-						tr.appendChild(td);
-						td.className = "left";
-						td.innerHTML = name;
-
-                        // this td contains the slider, number and button inputs
-						td = document.createElement("td");
-                        tr.appendChild(td);
-
-                        rangeInputElem = document.createElement("input");
-                        numberInputElem = document.createElement("input");
-                        buttonInputElem = document.createElement("input");
-                        td.appendChild(rangeInputElem);
-                        td.appendChild(numberInputElem);
-                        td.appendChild(buttonInputElem);
-
-                        // slider input
-                        rangeInputElem.type = "range";
-                        rangeInputElem.className = "midiSlider";
-                        rangeInputElem.twinInputElem = numberInputElem;
-                        rangeInputElem.value = defaultValue;
-                        rangeInputElem.defaultValue = defaultValue;
-                        rangeInputElem.min = 0;
-                        rangeInputElem.max = 127;
-                        rangeInputElem.ccIndex = ccIndex;   // rangeInputElem.cmdIndex = cmdIndex;
-                        rangeInputElem.onchange = onControlInputChanged; // onCommandInputChanged                        
-
-                        // number input
-						numberInputElem.type = "number";
-                        numberInputElem.className = "number";
-                        numberInputElem.twinInputElem = rangeInputElem;
-						numberInputElem.value = defaultValue;
-                        numberInputElem.defaultValue = defaultValue;
-                        numberInputElem.min = 0;
-                        numberInputElem.max = 127;
-                        numberInputElem.ccIndex = ccIndex; // rangeInputElem.cmdIndex = cmdIndex;
-                        numberInputElem.onchange = onControlInputChanged; // onCommandInputChanged 
-
-                        // button input
-						buttonInputElem.type = "button";
-						buttonInputElem.className = "sendAgainButton";
-						buttonInputElem.value = "send again";
-                        buttonInputElem.numberInputElem = numberInputElem;
-                        buttonInputElem.onclick = onSendControlAgainButtonClick; // onSendCommandAgainButtonClick;
-
-						td = document.createElement("td");
-						tr.appendChild(td);
-                        td.innerHTML = "CC " + ccIndex.toString();
-
-                        controlInputElems.push(rangeInputElem); // commandInputElems.push(rangeInputElem);
-                        controlInputElems.push(numberInputElem); // commandInputElems.push(numberInputElem);
+                        basicRow.rangeInputElem.ccIndex = ccIndex;
+                        basicRow.rangeInputElem.onchange = onControlInputChanged;
+                        basicRow.numberInputElem.ccIndex = ccIndex;
+                        basicRow.numberInputElem.onchange = onControlInputChanged;
+                        basicRow.buttonInputElem.onclick = onSendControlAgainButtonClick; 
                     }
 
 					// 2-byte uControls
@@ -667,7 +609,7 @@ WebMIDI.host = (function(document)
                                 {
                                     name = name + " (pitchWheel range)";
                                 }
-                                setLongControlRow(tr, name, defaultValue, ccIndex, i);
+                                setLongControlRow(tr, name, defaultValue, ccIndex);
 							}
 						}
 					}
@@ -684,8 +626,7 @@ WebMIDI.host = (function(document)
 				}
 			}
 
-			commandInputElems.length = 0;
-			controlInputElems.length = 0;
+			allRangeAndNumberInputElems.length = 0;
 
             empty(controlsTable);
 
