@@ -55,11 +55,69 @@ WebMIDI.host = (function(document)
                 return str;
             }
 
-            var data = e.data,
-                d0, d1, d2;
+            function UpdateGUI_ControlsTable(ccIndex, ccValue)
+            {
+                for(var i = 0; i < allRangeAndNumberInputElems.length; i++)
+                {
+                    let inputElem = allRangeAndNumberInputElems[i];
+                    if(inputElem.ccIndex !== undefined && inputElem.ccIndex === ccIndex)
+                    {
+                        inputElem.value = ccValue;
+                    }
+                }
+            }
+
+            function UpdateGUI_CommandsTable(cmdIndex, cmdValue)
+            {
+                for(var i = 0; i < allRangeAndNumberInputElems.length; i++)
+                {
+                    let inputElem = allRangeAndNumberInputElems[i];
+                    if(inputElem.cmdIndex !== undefined && inputElem.cmdIndex === cmdIndex)
+                    {
+                        inputElem.value = cmdValue;
+                    }
+                }
+            }
+
+            var data = e.data;
             try
             {
-                console.log(getMsgString(data));
+                let CMD = WebMIDI.constants.COMMAND,
+                    cmdIndex = data[0] & 0xF0;
+
+                switch(cmdIndex)
+                {
+                    case CMD.NOTE_OFF:
+                        break;
+                    case CMD.NOTE_ON:
+                        console.log("NoteOn: key=" + data[1] + ", velocity=" + data[2]);
+                        break;
+                    case CMD.AFTERTOUCH:
+                        console.log("Aftertouch: key=" + data[1] + ", value=" + data[2]);
+                        break;
+                    case CMD.CONTROL_CHANGE:
+                        UpdateGUI_ControlsTable(data[1], data[2]);
+                        console.log("control change: " + getMsgString(data));
+                        break;
+                    case CMD.PRESET:
+                        console.log("preset: " + getMsgString(data));
+                        break;
+                    case CMD.CHANNEL_PRESSURE:
+                        UpdateGUI_CommandsTable(cmdIndex, data[1]);
+                        console.log("channel pressure: value=" + data[1]);
+                        break;
+                    case CMD.PITCHWHEEL:
+                        // The residentWAFSynth reacts to midi values in range 0..127,
+                        // so data[1] (the fine byte) is ignored here. 
+                        UpdateGUI_CommandsTable(cmdIndex, data[2]);
+                        console.log("pitchWheel: value=" + data[2]);
+                        break;
+
+
+                    default:
+                        console.warn("Unknown command sent from midi input device.")
+                        break;
+                } 
                 synth.send(data, performance.now());                
             }
             catch(msg)
@@ -221,9 +279,7 @@ WebMIDI.host = (function(document)
 
 		setCommandsAndControlsDivs = function()
 		{
-			var CMD = WebMIDI.constants.COMMAND,
-				commandsAndControlsDiv = getElem("commandsAndControlsDiv"),
-				controlsTable = getElem("controlsTable");
+			var CMD = WebMIDI.constants.COMMAND;
 
             function empty(table)
             {
@@ -433,7 +489,7 @@ WebMIDI.host = (function(document)
                 return { rangeInputElem, numberInputElem, buttonInputElem };
             }
 
-            function appendCommandRows(table, commands)
+            function setCommandsTable(commands)
             {
                 // sets the presetSelect and 
                 // returns an array of tr elements
@@ -485,9 +541,7 @@ WebMIDI.host = (function(document)
                     for(let i = 0; i < cmdIndices.length; ++i)
                     {
                         let c = WebMIDI.constants,
-                            cmdIndex = cmdIndices[i],
-                            name = c.commandName(cmdIndex),
-                            defaultValue = c.commandDefaultValue(cmdIndex);
+                            cmdIndex = cmdIndices[i];
 
                         if(cmdIndex === CMD.PRESET)
                         {
@@ -498,6 +552,9 @@ WebMIDI.host = (function(document)
                         }
                         else if(cmdIndex === CMD.CHANNEL_PRESSURE || cmdIndex === CMD.PITCHWHEEL || cmdIndex === CMD.AFTERTOUCH)
                         {
+                            let name = c.commandName(cmdIndex),
+                                defaultValue = c.commandDefaultValue(cmdIndex);
+
                             tr = document.createElement("tr")
                             rval.push(tr);
                             setCommandRow(tr, name, defaultValue, cmdIndex);
@@ -507,16 +564,17 @@ WebMIDI.host = (function(document)
                     return rval;
                 }
 
-                let commandRows = getCommandRows(commands);
+                let commandsTable = getElem("commandsTable"),
+                    commandRows = getCommandRows(commands);
 
                 for(let i = 0; i < commandRows.length; ++i)
                 {
                     let tr = commandRows[i];
-                    table.appendChild(tr);
+                    commandsTable.appendChild(tr);
                 }
             }
 
-			function appendControlRows(table, controls)
+			function setControlsTable(controls)
 			{
 				// returns an array of tr elements
 				function getControlRows(ccIndices)
@@ -617,12 +675,13 @@ WebMIDI.host = (function(document)
 					return rval;
                 }
 
-                let controlRows = getControlRows(controls);
+                let controlsTable = getElem("controlsTable"),
+                    controlRows = getControlRows(controls);
 
 				for(let i = 0; i < controlRows.length; ++i)
 				{
 					let tr = controlRows[i];
-					table.appendChild(tr);
+                    controlsTable.appendChild(tr);
 				}
 			}
 
@@ -630,12 +689,11 @@ WebMIDI.host = (function(document)
 
             empty(controlsTable);
 
-            commandsAndControlsDiv.style.display = "block";
-            controlsTable.style.display = "table";
+            getElem("commandsAndControlsDiv").style.display = "block";
 
-			appendCommandRows(controlsTable, synth.commands);
+			setCommandsTable(synth.commands);
 
-			appendControlRows(controlsTable, synth.controls);
+			setControlsTable(synth.controls);
 
 			sendShortControl(WebMIDI.constants.CONTROL.ALL_CONTROLLERS_OFF);
 		},
