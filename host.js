@@ -296,18 +296,9 @@ WebMIDI.host = (function(document)
 
 			function sendShortControl(controlIndex)
 			{
-				var
-					presetSelect = getElem("presetSelect"),
-					commands = synth.commands;
-
 				function resetHostGUI()
 				{
 					var i, inputID, numberInputElem;
-
-					if(presetSelect !== null)
-					{
-						presetSelect.selectedIndex = 0;
-					}
 
 					for(i = 0; i < allRangeAndNumberInputElems.length; ++i)
                     {
@@ -318,38 +309,7 @@ WebMIDI.host = (function(document)
 
 				if(controlIndex === WebMIDI.constants.CONTROL.ALL_CONTROLLERS_OFF)
 				{
-					resetHostGUI();
-
-					let commandDefaultValue = WebMIDI.constants.commandDefaultValue;
-
-					if(commands.findIndex(cmd => cmd === CMD.PRESET) >= 0)
-					{
-						if(presetSelect !== null)
-						{
-							sendCommand(CMD.PRESET, presetSelect[0].presetIndex);
-						}
-						else
-						{
-							sendCommand(CMD.PRESET, commandDefaultValue(CMD.PRESET));
-						}
-                    }
-
-					if(commands.findIndex(cmd => cmd === CMD.CHANNEL_PRESSURE) >= 0)
-					{
-						sendCommand(CMD.CHANNEL_PRESSURE, commandDefaultValue(CMD.CHANNEL_PRESSURE));
-					}
-					if(commands.findIndex(cmd => cmd === CMD.PITCHWHEEL) >= 0)
-					{
-						sendCommand(CMD.PITCHWHEEL, commandDefaultValue(CMD.PITCHWHEEL));
-                    }
-
-                    // It is very unlikely that the ResidentWAFSynth will ever need to implement AFTERTOUCH,
-                    // so AFTERTOUCH has been eliminated from this host application.
-					if(commands.findIndex(cmd => cmd === CMD.AFTERTOUCH) >= 0)
-					{
-						//sendAftertouch(commandDefaultValue(CMD.AFTERTOUCH));
-                        console.warn("This host software is not designed for AFTERTOUCH !");
-					}
+					resetHostGUI();					
 				}
 
 				sendCommand(CMD.CONTROL_CHANGE, controlIndex);

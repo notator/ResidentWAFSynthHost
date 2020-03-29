@@ -957,7 +957,7 @@ WebMIDI.residentWAFSynth = (function(window)
 		{
 			checkCommandExport(CMD.PITCHWHEEL);
 			// console.log("residentWAFSynth PitchWheel: channel:" + channel, " value:" + data1);
-			that.updatePitchBend(channel, data1, data2);
+			that.updatePitchWheel(channel, data1, data2);
 		}
 
 		switch(command)
@@ -982,26 +982,15 @@ WebMIDI.residentWAFSynth = (function(window)
 		}
 	};
 
+    // This command resets the pitchWheel and all CC controllers to their default values,
+    // but does *not* reset the current bank or preset.
+    // CMD.CHANNEL_PRESSURE should be reset if/when it is implemented. 
 	ResidentWAFSynth.prototype.setChannelDefaults = function(channel)
 	{
-		let commandDefaultValue = WebMIDI.constants.commandDefaultValue,
-			controlDefaultValue = WebMIDI.constants.controlDefaultValue,
-			bank = banks[controlDefaultValue(CTL.BANK)],
-			presetIndex;
+        let commandDefaultValue = WebMIDI.constants.commandDefaultValue,
+            controlDefaultValue = WebMIDI.constants.controlDefaultValue;
 
-		this.updateBank(channel, controlDefaultValue(CTL.BANK));
-
-		for(let i = 0; i < bank.length; i++) // bank.findIndex(...) does not work here
-		{
-			if(i in bank)
-			{
-				presetIndex = i;
-				break;
-			}
-		}
-		this.updatePreset(channel, presetIndex);
-
-		this.updatePitchBend(channel, 0, commandDefaultValue(CMD.PITCHWHEEL));
+		this.updatePitchWheel(channel, 0, commandDefaultValue(CMD.PITCHWHEEL));
 
 		this.registeredParameterCoarse(channel, controlDefaultValue(CTL.REGISTERED_PARAMETER_COARSE));
 		this.dataEntryCoarse(channel, controlDefaultValue(CTL.DATA_ENTRY_COARSE));
@@ -1156,7 +1145,7 @@ WebMIDI.residentWAFSynth = (function(window)
 		channelData[channel].presetIndex = presetIndex;
 	};
 
-	ResidentWAFSynth.prototype.updatePitchBend = function(channel, lowerByte, higherByte)
+	ResidentWAFSynth.prototype.updatePitchWheel = function(channel, lowerByte, higherByte)
 	{
 		var pitchBend = ((lowerByte & 0x7f) | ((higherByte & 0x7f) << 7)) - 8192,
 			currentNoteOns = channelData[channel].currentNoteOns;
