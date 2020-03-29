@@ -289,33 +289,6 @@ WebMIDI.host = (function(document)
                 }
             }
 
-			// sends aftertouch to the notes currently set in the notes controls
-			function sendAftertouch(pressure)
-			{
-				var
-					singleNoteIndex = getElem("noteDiv1IndexInput").valueAsNumber,
-					note1Checkbox = getElem("sendNote1Checkbox"),
-					note1Index = getElem("notesDiv2IndexInput1").valueAsNumber,
-					note2Checkbox = getElem("sendNote2Checkbox"),
-					note2Index = getElem("notesDiv2IndexInput2").valueAsNumber;
-
-				if(getElem("notesDiv2").display === "none")
-				{
-					sendCommand(CMD.AFTERTOUCH, singleNoteIndex, pressure);
-				}
-				else
-				{
-					if(note1Checkbox.checked)
-					{
-						sendCommand(CMD.AFTERTOUCH, note1Index, pressure);
-					}
-					if(note2Checkbox.checked)
-					{
-						sendCommand(CMD.AFTERTOUCH, note2Index, pressure);
-					}
-				}
-			}
-
 			function sendLongControl(controlIndex, value)
 			{
 				sendCommand(CMD.CONTROL_CHANGE, controlIndex, value);
@@ -359,7 +332,7 @@ WebMIDI.host = (function(document)
 						{
 							sendCommand(CMD.PRESET, commandDefaultValue(CMD.PRESET));
 						}
-					}
+                    }
 
 					if(commands.findIndex(cmd => cmd === CMD.CHANNEL_PRESSURE) >= 0)
 					{
@@ -368,10 +341,14 @@ WebMIDI.host = (function(document)
 					if(commands.findIndex(cmd => cmd === CMD.PITCHWHEEL) >= 0)
 					{
 						sendCommand(CMD.PITCHWHEEL, commandDefaultValue(CMD.PITCHWHEEL));
-					}
+                    }
+
+                    // It is very unlikely that the ResidentWAFSynth will ever need to implement AFTERTOUCH,
+                    // so AFTERTOUCH has been eliminated from this host application.
 					if(commands.findIndex(cmd => cmd === CMD.AFTERTOUCH) >= 0)
 					{
-						sendAftertouch(commandDefaultValue(CMD.AFTERTOUCH));
+						//sendAftertouch(commandDefaultValue(CMD.AFTERTOUCH));
+                        console.warn("This host software is not designed for AFTERTOUCH !");
 					}
 				}
 
@@ -497,25 +474,16 @@ WebMIDI.host = (function(document)
                 {
                     function setCommandRow(tr, name, defaultValue, cmdIndex)
                     {
-                        function doCommand(command, value)
-                        {
-                            if(command === CMD.AFTERTOUCH)
-                            {
-                                sendAftertouch(value);
-                            }
-                            else // can only be CHANNEL_PRESSURE or PITCHWHEEL
-                            {
-                                sendCommand(command, value);
-                            }
-                        }
-
                         function onCommandInputChanged(event)
                         {
                             var currentTarget = event.currentTarget,
                                 value = currentTarget.valueAsNumber,
                                 cmdIndex = currentTarget.cmdIndex;
 
-                            doCommand(cmdIndex, value);
+                            // can only be CHANNEL_PRESSURE or PITCHWHEEL
+                            console.assert(cmdIndex === WebMIDI.constants.COMMAND.PITCHWHEEL || cmdIndex === WebMIDI.constants.COMMAND.CHANNEL_PRESSURE);
+
+                            sendCommand(cmdIndex, value);
                             setTwinInputControl(currentTarget, value);
                         }
 
@@ -525,7 +493,10 @@ WebMIDI.host = (function(document)
                                 value = numberInputElem.valueAsNumber,
                                 cmdIndex = numberInputElem.cmdIndex;
 
-                            doCommand(cmdIndex, value);
+                            // can only be CHANNEL_PRESSURE or PITCHWHEEL
+                            console.assert(cmdIndex === WebMIDI.constants.COMMAND.PITCHWHEEL || cmdIndex === WebMIDI.constants.COMMAND.CHANNEL_PRESSURE);
+
+                            sendCommand(cmdIndex, value);
                         }
 
                         let basicRow = setBasicRow(tr, name, defaultValue, "Cmd " + cmdIndex.toString());
@@ -780,8 +751,8 @@ WebMIDI.host = (function(document)
 
 			setCommandsAndControlsDivs();
 
-			getElem("noteDiv1").style.display = "none";
-			getElem("notesDiv2").style.display = "block";
+            getElem("noteDiv1").style.display = "none";
+            getElem("notesDiv2").style.display = "block";
 		},
 
 		noteCheckboxClicked = function()
@@ -889,29 +860,29 @@ WebMIDI.host = (function(document)
 			}
 		},
 
-		holdCheckboxClicked = function()
-		{
-			var
-				holdCheckbox1 = getElem("holdCheckbox1"),
-				holdCheckbox2 = getElem("holdCheckbox2");
+        holdCheckboxClicked = function()
+        {
+            var
+                holdCheckbox1 = getElem("holdCheckbox1"),
+                holdCheckbox2 = getElem("holdCheckbox2");
 
-			if(getElem("notesDiv2").style.display === "none")
-			{
-				if(holdCheckbox1.checked === false)
-				{
-					doNoteOff();
-					getElem("sendButton1").disabled = false;
-				}
-			}
-			else
-			{
-				if(holdCheckbox2.checked === false)
-				{
-					doNotesOff();
-					getElem("sendButton2").disabled = false;
-				}
-			}
-		},
+            if(getElem("notesDiv2").style.display === "none")
+            {
+                if(holdCheckbox1.checked === false)
+                {
+                    doNoteOff();
+                    getElem("sendButton1").disabled = false;
+                }
+            }
+            else
+            {
+                if(holdCheckbox2.checked === false)
+                {
+                    doNotesOff();
+                    getElem("sendButton2").disabled = false;
+                }
+            }
+        },
 
 		init = function()
 		{

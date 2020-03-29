@@ -637,10 +637,12 @@ WebMIDI.residentWAFSynth = (function(window)
 			[
 				CMD.NOTE_OFF,
 				CMD.NOTE_ON,
-				// CMD.AFTERTOUCH is not defined,
+				// CMD.AFTERTOUCH is not defined.
+                // It is very unlikely that this synth will ever need to implement AFTERTOUCH, so
+                // AFTERTOUCH has been eliminated from the ResidentWAFSynthHost development environment.
 				CMD.CONTROL_CHANGE,
 				CMD.PRESET,
-				// CMD.CHANNEL_PRESSURE is not defined,
+				// CMD.CHANNEL_PRESSURE is not yet defined,
 				CMD.PITCHWHEEL
 			],
 
