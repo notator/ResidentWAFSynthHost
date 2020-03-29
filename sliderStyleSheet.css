@@ -19,7 +19,7 @@
     height: 12px;
     margin-right: 4px;
     outline: none;
-    background: #e8e8e8;
+    background: #aaa; /* was e8e8e8 */
     border-style: solid;
     border-width: 1px;
     border-color: #444;
