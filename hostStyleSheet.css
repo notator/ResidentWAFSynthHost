@@ -2,18 +2,26 @@
 body
 {
     font-family: Lucida Sans Unicode, Verdana, Arial, Geneva, Sans-Serif;
-    font-size: 11px; 
-	width: 660px; /* was 420px */
-	margin:30px auto 0 auto;
-	padding:25px;
-	border:1px solid black;
+    font-size: 11px;
+    width: 660px;
+    margin: 25px auto 0 auto;
+    padding: 0;
+}
+
+div.background
+{
+    width: 660px; 
+    margin: 0;
+    padding: 25px;
+    background-color: #EEEEEE;
+    border: 1px solid black;
 }
 
 hr
 {
     border-style: none;
     height: 4px;
-    background-color: #CCC;
+    background-color: #AAA;
 }
 
 .boldTitle
@@ -36,7 +44,7 @@ hr
 
 .commandsTable
 {
-    border-bottom: 3px solid #BBB;
+    border-bottom: 3px solid #999;
     padding-bottom: 5px;
     margin-bottom: 5px;
 }
