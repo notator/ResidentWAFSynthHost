@@ -711,8 +711,7 @@ WebMIDI.host = (function(document)
 
 			setCommandsAndControlsDivs();
 
-            getElem("noteDiv1").style.display = "none";
-            getElem("notesDiv2").style.display = "block";
+            getElem("notesDiv").style.display = "block";
 		},
 
 		noteCheckboxClicked = function()
@@ -748,46 +747,21 @@ WebMIDI.host = (function(document)
 			}
 		},
 
-		doNoteOn = function()
-		{
-			var
-				noteIndex = getElem("noteDiv1IndexInput").valueAsNumber,
-				noteVelocity = getElem("noteDiv1VelocityInput").valueAsNumber,
-				holdCheckbox1 = getElem("holdCheckbox1"),
-				sendButton1 = getElem("sendButton1");
-
-			if(holdCheckbox1.checked === true)
-			{
-				sendButton1.disabled = true;
-			}
-
-			sendNoteOn(noteIndex, noteVelocity);
-		},
-
-		doNoteOff = function()
-		{
-			var
-				noteIndex = getElem("noteDiv1IndexInput").valueAsNumber,
-				noteVelocity = getElem("noteDiv1VelocityInput").valueAsNumber;
-
-			sendNoteOff(noteIndex, noteVelocity);
-		},
-
 		doNotesOn = function()
 		{
 			var
 				note1Checkbox = getElem("sendNote1Checkbox"),
-				note1Index = getElem("notesDiv2IndexInput1").valueAsNumber,
-				note1Velocity = getElem("notesDiv2VelocityInput1").valueAsNumber,
+				note1Index = getElem("notesDivIndexInput1").valueAsNumber,
+				note1Velocity = getElem("notesDivVelocityInput1").valueAsNumber,
 				note2Checkbox = getElem("sendNote2Checkbox"),
-				note2Index = getElem("notesDiv2IndexInput2").valueAsNumber,
-				note2Velocity = getElem("notesDiv2VelocityInput2").valueAsNumber,
-				holdCheckbox2 = getElem("holdCheckbox2"),
-				sendButton2 = getElem("sendButton2");
+				note2Index = getElem("notesDivIndexInput2").valueAsNumber,
+				note2Velocity = getElem("notesDivVelocityInput2").valueAsNumber,
+				holdCheckbox = getElem("holdCheckbox"),
+				sendButton = getElem("sendButton");
 
-			if(holdCheckbox2.checked === true)
+			if(holdCheckbox.checked === true)
 			{
-				sendButton2.disabled = true;
+				sendButton.disabled = true;
 			}
 
 			if(note1Checkbox.checked)
@@ -804,11 +778,11 @@ WebMIDI.host = (function(document)
 		{
 			var
 				note1Checkbox = getElem("sendNote1Checkbox"),
-				note1Index = getElem("notesDiv2IndexInput1").valueAsNumber,
-				note1Velocity = getElem("notesDiv2VelocityInput1").valueAsNumber,
+				note1Index = getElem("notesDivIndexInput1").valueAsNumber,
+				note1Velocity = getElem("notesDivVelocityInput1").valueAsNumber,
 				note2Checkbox = getElem("sendNote2Checkbox"),
-				note2Index = getElem("notesDiv2IndexInput2").valueAsNumber,
-				note2Velocity = getElem("notesDiv2VelocityInput2").valueAsNumber;
+				note2Index = getElem("notesDivIndexInput2").valueAsNumber,
+				note2Velocity = getElem("notesDivVelocityInput2").valueAsNumber;
 
 			if(note1Checkbox.checked)
 			{
@@ -822,25 +796,13 @@ WebMIDI.host = (function(document)
 
         holdCheckboxClicked = function()
         {
-            var
-                holdCheckbox1 = getElem("holdCheckbox1"),
-                holdCheckbox2 = getElem("holdCheckbox2");
+            let holdCheckbox = getElem("holdCheckbox");
 
-            if(getElem("notesDiv2").style.display === "none")
+            doNotesOff();
+
+            if(holdCheckbox.checked === false)
             {
-                if(holdCheckbox1.checked === false)
-                {
-                    doNoteOff();
-                    getElem("sendButton1").disabled = false;
-                }
-            }
-            else
-            {
-                if(holdCheckbox2.checked === false)
-                {
-                    doNotesOff();
-                    getElem("sendButton2").disabled = false;
-                }
+                getElem("sendButton").disabled = false;
             }
         },
 
@@ -912,8 +874,8 @@ WebMIDI.host = (function(document)
 
                 getElem("webAudioFontDiv").style.display = "none";
                 getElem("commandsAndControlsDiv").style.display = "none";
-                getElem("noteDiv1").style.display = "none";
-                getElem("notesDiv2").style.display = "none";
+
+                getElem("notesDiv").style.display = "none";
             }
 
             setupInputDevice();
@@ -937,9 +899,6 @@ WebMIDI.host = (function(document)
 
 			noteCheckboxClicked: noteCheckboxClicked,
 			holdCheckboxClicked: holdCheckboxClicked,
-
-			doNoteOn: doNoteOn,
-			doNoteOff: doNoteOff,
 
 			doNotesOn: doNotesOn,
 			doNotesOff: doNotesOff
