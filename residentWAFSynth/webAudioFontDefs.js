@@ -13,8 +13,8 @@ WebMIDI.webAudioFontDefs =
 			presetNamesPerBank:
 			[
 				[	// bank 0
-					"_tone_0080_FluidR3_GM_sf2_file", // presetIndex:8, celesta
-					"_tone_0090_FluidR3_GM_sf2_file", // presetIndex:9, glockenspiel
+					"_tone_0080_FluidR3_GM_sf2_file", // presetIndex:8,  celesta
+					"_tone_0090_FluidR3_GM_sf2_file", // presetIndex:9,  glockenspiel
 					"_tone_0100_FluidR3_GM_sf2_file", // presetIndex:10, musicBox
 					"_tone_0110_FluidR3_GM_sf2_file", // presetIndex:11, vibraphone
 					"_tone_0120_FluidR3_GM_sf2_file", // presetIndex:12, marimba
@@ -173,7 +173,34 @@ WebMIDI.percussionPresets =
 					"_drum_63_0_FluidR3_GM_sf2_file"  // keyIndex:63 Open Hi Conga 
 				]
 		}
-	];
+    ];
+
+WebMIDI.initialPresetsPerChannel =
+    {
+        fontName: "Study 2", // This must be the first of the above font definitions
+        channelsData: // This array must have a valid entry for each of the 16 channels.
+        [            
+            // presetIndex is GM index as above)
+            { bankIndex: 0, presetIndex: 8 },  // channel 0,  celesta
+            { bankIndex: 0, presetIndex: 9 },  // channel 1,  glockenspiel
+            { bankIndex: 0, presetIndex: 10 }, // channel 2,  musicBox
+            { bankIndex: 0, presetIndex: 11 }, // channel 3,  vibraphone
+            { bankIndex: 0, presetIndex: 12 }, // channel 4,  marimba
+            { bankIndex: 0, presetIndex: 13 }, // channel 5,  xylophone
+            { bankIndex: 0, presetIndex: 14 }, // channel 6,  tubularBells
+            { bankIndex: 0, presetIndex: 15 }, // channel 7,  dulcimer
+            { bankIndex: 0, presetIndex: 24 }, // channel 8,  nylonGuitar
+            { bankIndex: 0, presetIndex: 25 }, // channel 9,  steelGuitar
+            { bankIndex: 0, presetIndex: 26 }, // channel 10, electricGuitarJazz
+            { bankIndex: 0, presetIndex: 27 }, // channel 11, electricGuitarClean
+            { bankIndex: 0, presetIndex: 8 },  // channel 12, celesta
+            { bankIndex: 0, presetIndex: 8 },  // channel 13, celesta
+            { bankIndex: 0, presetIndex: 8 },  // channel 14, celesta
+            { bankIndex: 0, presetIndex: 8 }   // channel 15, celesta
+        ]
+    }
+
+
 
 
 

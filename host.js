@@ -187,18 +187,98 @@ WebMIDI.host = (function(document)
 		},
 
 		onChannelSelectChanged = function()
-		{
-			let sendAgainButtons = document.getElementsByClassName("sendAgainButton");
-			for(var i = 0; i < sendAgainButtons.length; i++)
-			{
-				sendAgainButtons[i].click();
-			}
+        {
+            function setGUIControls(synthChannelControlsState)
+            {
+                function setGUIControl(ccIndex, ccValue)
+                {
+                    for(var i = 0; i < allRangeAndNumberInputElems.length; i++)
+                    {
+                        let ctlElem = allRangeAndNumberInputElems[i];
+                        if(ctlElem.ccIndex === ccIndex)
+                        {
+                            ctlElem.value = ccValue;
+                        }
+                    }
+                }
+                function setGUICommand(cmdIndex, cmdValue)
+                {
+                    for(var i = 0; i < allRangeAndNumberInputElems.length; i++)
+                    {
+                        let cmdElem = allRangeAndNumberInputElems[i];
+                        if(cmdElem.cmdIndex === cmdIndex)
+                        {
+                            cmdElem.value = cmdValue;
+                        }
+                    }
+                }
+                function setPresetSelect(bankIndex, presetIndex)
+                {
+                    let presetSelect = getElem("presetSelect"),
+                        options = presetSelect.options;
+
+                    for(var i = 0; i < options.length; i++)
+                    {
+                        let preset = options[i].preset;
+                        if(preset.bankIndex === bankIndex && preset.presetIndex === presetIndex)
+                        {
+                            presetSelect.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+
+                let CMD = WebMIDI.constants.COMMAND,
+                    CTL = WebMIDI.constants.CONTROL,
+                    bankIndex, presetIndex; // set in the following loop
+
+                for(var i = 0; i < synthChannelControlsState.length; i++)
+                {
+                    let info = synthChannelControlsState[i],
+                        ccIndex = info.ccIndex,
+                        ccValue = info.ccValue,
+                        cmdIndex = info.cmdIndex,
+                        cmdValue = info.cmdValue;
+
+                    if(ccIndex !== undefined)
+                    {
+                        if(ccIndex === CTL.BANK)
+                        {
+                            bankIndex = ccValue;
+                        }
+                        else
+                        {
+                            setGUIControl(ccIndex, ccValue);
+                        }
+                    }
+                    else // cmdIndex !== undefined)
+                    {
+                        if(cmdIndex === CMD.PRESET)
+                        {
+                            presetIndex = cmdValue;
+                        }
+                        else
+                        {
+                            setGUICommand(cmdIndex, cmdValue);
+                        }
+                    }
+                }
+
+                setPresetSelect(bankIndex, presetIndex);
+            }
+
+            let channelSelect = getElem("channelSelect"),
+                channel = channelSelect.selectedIndex,
+                synthChannelControlsState = synth.channelControlsState(channel);
+
+            // channelData contains all the info necessary for setting the GUI controls.
+            setGUIControls(synthChannelControlsState);
 		},
 
 		// called by onSoundFontSelectChanged with Sf2 fonts,and by "send again" button.
 		onPresetSelectChanged = function()
 		{
-			var CMD = WebMIDI.constants.COMMAND,
+			let CMD = WebMIDI.constants.COMMAND,
 				CTL = WebMIDI.constants.CONTROL,
 				channelSelect = getElem("channelSelect"),
 				presetSelect = getElem("presetSelect"),
@@ -479,7 +559,7 @@ WebMIDI.host = (function(document)
                             console.assert(synth.name === "ResidentWAFSynth", "Error: This app only uses the residentWAFSynth.");
                             let presetSelectCell = getElem("presetSelectCell")
                             appendPresetSelect(presetSelectCell, webAudioFontSelect[webAudioFontSelect.selectedIndex].presetOptionsArray);
-                            onWebAudioFontSelectChanged();
+                            onWebAudioFontSelectChanged(true);
                         }
                         else if(cmdIndex === CMD.CHANNEL_PRESSURE || cmdIndex === CMD.PITCHWHEEL || cmdIndex === CMD.AFTERTOUCH)
                         {
@@ -630,7 +710,7 @@ WebMIDI.host = (function(document)
 		},
 
 		// exported
-		onWebAudioFontSelectChanged = function()
+		onWebAudioFontSelectChanged = function(isInitializing)
 		{
 			let webAudioFontSelect = getElem("webAudioFontSelect"),
 				presetSelect = getElem("presetSelect"),
@@ -641,8 +721,11 @@ WebMIDI.host = (function(document)
 			synth.setSoundFont(soundFont);
 
 			setOptions(presetSelect, presetOptionsArray);
-			presetSelect.selectedIndex = 0;
-			onPresetSelectChanged();
+            presetSelect.selectedIndex = 0;
+            if(!isInitializing)
+            {
+                onPresetSelectChanged();
+            }
 		},
 
 		// exported.

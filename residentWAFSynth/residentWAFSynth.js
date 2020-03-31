@@ -620,11 +620,17 @@ WebMIDI.residentWAFSynth = (function(window)
 			sleepUntilAllFontsAreReady(webAudioFonts);
 
 			return webAudioFonts;
-		},
+        },
+
+        // returns a value in range [-8192..+8191] for argument values in range [0..127]
+        getPitchBend14bit = function(byte)
+        {
+            return ((byte << 7) + byte) - 8192;
+        },
 
 		banks, // set in synth.setSoundFont
-		finalGainNode, // set in synth.open
-		channelData = [], // set in synth.open
+        channelAudioNodes = [], // initialized in synth.open
+        channelControls = [], // initialized in synth.open
 
 		/*  end of gree variables  ****************************************/
 		/******************************************************************/
@@ -733,42 +739,67 @@ WebMIDI.residentWAFSynth = (function(window)
 	// See https://github.com/notator/WebMIDISynthHost/issues/24
 	// This is called after user interaction with the page.
 	ResidentWAFSynth.prototype.open = function()
-	{
+    {
+        function audioNodesConfig(audioContext, finalGainNode)
+        {
+            // Create and connect the channel AudioNodes:
+            let channelPanNode = audioContext.createStereoPanner(),
+                channelReverberator = new WebMIDI.wafReverberator.WAFReverberator(audioContext),
+                channelGainNode = audioContext.createGain();
+
+            channelPanNode.connect(channelReverberator.input);
+            channelReverberator.output.connect(channelGainNode);
+            channelGainNode.connect(finalGainNode);
+
+            let channelInfo = {};
+            // The GainNode that is created by each NoteOn (to control the note's individual envelope),
+            // is connected to the channelInfo.inputNode.
+            channelInfo.inputNode = channelPanNode;
+            channelInfo.panNode = channelPanNode;
+            channelInfo.reverberator = channelReverberator;
+            channelInfo.gainNode = channelGainNode;
+
+            return channelInfo;
+        }
+
+        function initialControlsState(channel)
+        {
+            let constants = WebMIDI.constants,
+                CMD = constants.COMMAND,
+                CTL = constants.CONTROL,
+                commandDefaultValue = constants.commandDefaultValue,
+                controlDefaultValue = constants.controlDefaultValue,
+                presetData = WebMIDI.initialPresetsPerChannel.channelsData[channel],
+                controlState = {};
+
+            controlState.bankIndex = presetData.bankIndex;
+            controlState.presetIndex = presetData.presetIndex;
+
+            controlState.pitchWheel = commandDefaultValue(CMD.PITCHWHEEL);
+
+            controlState.volume = controlDefaultValue(CTL.VOLUME);
+            controlState.pan = controlDefaultValue(CTL.PAN);
+            controlState.reverberation = controlDefaultValue(CTL.REVERBERATION);
+            controlState.dataEntryCoarse = controlDefaultValue(CTL.DATA_ENTRY_COARSE);
+
+            controlState.currentNoteOns = [];
+
+            return controlState;
+        }
+
+        console.assert(WebMIDI.initialPresetsPerChannel.fontName === this.webAudioFonts[0].name);
+
 		let audioContext = this.audioContext; 
 
 		audioContext.resume().then(() => { console.log('AudioContext resumed successfully'); });
 
-		finalGainNode = audioContext.createGain();
-		finalGainNode.connect(audioContext.destination);
+        channelAudioNodes.finalGainNode = audioContext.createGain();
+        channelAudioNodes.finalGainNode.connect(audioContext.destination);
 
-		/*****************************************************
-		 * set up multiChannel channelData
-		 * See also setChannelDefaults(channel) and
-		 *          ResidentWAFSynth.prototype.close()
-		 */
 		for(var i = 0; i < 16; i++)
 		{
-			// Create and connect the channel AudioNodes:
-			let channelPanNode = audioContext.createStereoPanner(),
-				channelReverberator = new WebMIDI.wafReverberator.WAFReverberator(audioContext),
-				channelGainNode = audioContext.createGain(); 
-
-			channelPanNode.connect(channelReverberator.input);
-			channelReverberator.output.connect(channelGainNode);
-			channelGainNode.connect(finalGainNode);
-
-			// The values of the above nodes and other attributes are set in
-			// setChannelDefaults(channel) at the end of the loadSoundFont(webAudioFont) function.
-			let channelInfo = {};
-			// The GainNode that is created by each NoteOn (to control the note's individual envelope),
-			// is connected to the channelInfo.inputNode.
-			channelInfo.inputNode = channelPanNode;
-			channelInfo.panNode = channelPanNode;
-			channelInfo.reverberator = channelReverberator;
-			channelInfo.gainNode = channelGainNode;
-			channelInfo.currentNoteOns = [];
-
-			channelData.push(channelInfo);
+            channelAudioNodes.push(audioNodesConfig(audioContext, channelAudioNodes.finalGainNode));
+            channelControls.push(initialControlsState(i));
 		}
 		console.log("residentWAFSynth opened.");
 	};
@@ -777,16 +808,16 @@ WebMIDI.residentWAFSynth = (function(window)
 	// See https://github.com/notator/WebMIDISynthHost/issues/24
 	ResidentWAFSynth.prototype.close = function()
     {
-        if(channelData.length > 0)
+        if(channelAudioNodes.length > 0)
         {
             for(var i = 0; i < 16; i++)
             {
-                channelData[i].panNode.disconnect();
-                channelData[i].reverberator.disconnect();
-                channelData[i].gainNode.disconnect();
+                channelAudioNodes[i].panNode.disconnect();
+                channelAudioNodes[i].reverberator.disconnect();
+                channelAudioNodes[i].gainNode.disconnect();
             }
-            finalGainNode.disconnect();
-            channelData.length = 0;
+            channelAudioNodes.finalGainNode.disconnect();
+            channelAudioNodes.length = 0;
             console.log("residentWAFSynth closed.");
         }
 	};
@@ -858,7 +889,7 @@ WebMIDI.residentWAFSynth = (function(window)
 				// The exported controls are the ones that appear in the GUI.
 				// There should be no bank control in the list of this synths visible controls, so 
 				// checkControlExport(CTL.BANK) is not called here.
-				channelData[channel].bankIndex = value; // this is the complete implementation!
+                channelControls[channel].bankIndex = value; // this is the complete implementation!
 
 				// console.log("residentWAFSynth Bank: channel:" + channel + " value:" + value);
 			}
@@ -980,27 +1011,44 @@ WebMIDI.residentWAFSynth = (function(window)
 			default:
                 console.warn("Command " + command.toString(10) + " (0x" + command.toString(16) + ") is not supported.");
 		}
-	};
+    };
 
     // This command resets the pitchWheel and all CC controllers to their default values,
     // but does *not* reset the current bank or preset.
-    // CMD.CHANNEL_PRESSURE should be reset if/when it is implemented. 
-	ResidentWAFSynth.prototype.setChannelDefaults = function(channel)
+    // (CMD.CHANNEL_PRESSURE should also be reset here if/when it is implemented.) 
+	ResidentWAFSynth.prototype.setCCDefaultsForChannel = function(channel)
 	{
         let commandDefaultValue = WebMIDI.constants.commandDefaultValue,
             controlDefaultValue = WebMIDI.constants.controlDefaultValue;
 
-		this.updatePitchWheel(channel, 0, commandDefaultValue(CMD.PITCHWHEEL));
+		this.updatePitchWheel(channel, commandDefaultValue(CMD.PITCHWHEEL));
 
 		this.registeredParameterCoarse(channel, controlDefaultValue(CTL.REGISTERED_PARAMETER_COARSE));
 		this.dataEntryCoarse(channel, controlDefaultValue(CTL.DATA_ENTRY_COARSE));
 		this.updateReverberation(channel, controlDefaultValue(CTL.REVERBERATION));
 		this.updateVolume(channel, controlDefaultValue(CTL.VOLUME));
 		this.updatePan(channel, controlDefaultValue(CTL.PAN));
-	};
+    };
+
+    ResidentWAFSynth.prototype.channelControlsState = function(channel)
+    {
+        let controlsInfo = channelControls[channel],
+            state = [];
+
+        state.push({ cmdIndex: CMD.PRESET, cmdValue: controlsInfo.presetIndex });
+        state.push({ cmdIndex: CMD.PITCHWHEEL, cmdValue: controlsInfo.pitchWheel });
+
+        state.push({ ccIndex: CTL.BANK, ccValue: controlsInfo.bankIndex });
+        state.push({ ccIndex: CTL.VOLUME, ccValue: controlsInfo.volume });
+        state.push({ ccIndex: CTL.PAN, ccValue: controlsInfo.pan});
+        state.push({ ccIndex: CTL.REVERBERATION, ccValue: controlsInfo.reverberation });
+        state.push({ ccIndex: CTL.DATA_ENTRY_COARSE, ccValue: controlsInfo.dataEntryCoarse });
+
+        return state;
+    }
 
 	ResidentWAFSynth.prototype.setSoundFont = function(webAudioFont)
-	{
+    {
 		if(!webAudioFont.isReady())
 		{
 			throw "This function should not be called before the webAudioFont is ready!";
@@ -1021,8 +1069,8 @@ WebMIDI.residentWAFSynth = (function(window)
 		}
 
 		for(let i = 0; i < 16; ++i)
-		{			
-			this.setChannelDefaults(i);
+        {
+			this.setCCDefaultsForChannel(i);
 		}
 
 		console.log("residentWAFSynth WebAudioFont set.");
@@ -1037,13 +1085,13 @@ WebMIDI.residentWAFSynth = (function(window)
 	ResidentWAFSynth.prototype.noteOn = function(channel, key, velocity)
 	{
 		var audioContext = this.audioContext,
-			bankIndex = channelData[channel].bankIndex,
+            bankIndex = channelControls[channel].bankIndex,
 			bank = banks[bankIndex],
 			preset,
 			zone,
 			note,
 			midi = {},
-			bankIndexStr, presetIndexStr, channelStr, keyStr;
+            bankIndexStr, presetIndexStr, channelStr, keyStr;
 
 		// *Setting* the pitchBendSensitivity should be done by
 		//   1. setting registeredParameterCoarse to 0.
@@ -1052,16 +1100,16 @@ WebMIDI.residentWAFSynth = (function(window)
 		// This synth ignores both channelRegisteredParameterFine and channelDataEntryFine.
 		function getPitchBendSensitivity(channel)
 		{
-			if(channelData[channel].registeredParameterCoarse !== 0)
+            if(channelControls[channel].registeredParameterCoarse !== 0)
 			{
 				throw "registeredParameterCoarse must be 0 to get the pitch bend sensitivity";
 			}
-			return channelData[channel].dataEntryCoarse; // the channel's pitchBendSensitivity in semitones
+            return channelControls[channel].dataEntryCoarse; // the channel's pitchBendSensitivity in semitones
 		}
 
 		if(velocity === 0)
 		{
-			let currentNoteOns = channelData[channel].currentNoteOns;
+            let currentNoteOns = channelControls[channel].currentNoteOns;
 			let note = currentNoteOns.find(note => note.key === key);
 			if(note !== undefined)
 			{
@@ -1076,11 +1124,11 @@ WebMIDI.residentWAFSynth = (function(window)
 			return;
 		}
 
-		preset = bank[channelData[channel].presetIndex];
+        preset = bank[channelControls[channel].presetIndex];
 		if(preset === undefined)
 		{
 			bankIndexStr = bankIndex.toString(10);
-			presetIndexStr = (channelData[channel].presetIndex).toString(10);
+            presetIndexStr = (channelControls[channel].presetIndex).toString(10);
 			console.warn("preset not found: bankIndex=" + bankIndexStr + " presetIndex=" + presetIndexStr);
 			return;
 		}
@@ -1089,7 +1137,7 @@ WebMIDI.residentWAFSynth = (function(window)
 		if(!zone)
 		{
 			bankIndexStr = bankIndex.toString(10);
-			presetIndexStr = (channelData[channel].presetIndex).toString(10);
+            presetIndexStr = (channelControls[channel].presetIndex).toString(10);
 			channelStr = channel.toString(10);
 			keyStr = key.toString(10);
 			let warnString = "zone not found: bank=" + bankIndexStr + " presetIndex=" + presetIndexStr + " channel=" + channelStr + " key=" + keyStr;
@@ -1108,22 +1156,22 @@ WebMIDI.residentWAFSynth = (function(window)
 
 		midi.key = key;
 		midi.velocity = velocity;
-		midi.pitchBend = channelData[channel].pitchBend; // a value in range [-8192..+8191]
+        midi.pitchBend14bit = getPitchBend14bit(channelControls[channel].pitchWheel); // a value in range [-8192..+8191]
 		midi.pitchBendSensitivity = getPitchBendSensitivity(channel);
 
 		let noteGainNode = audioContext.createGain();
 
-		noteGainNode.connect(channelData[channel].inputNode);
+		noteGainNode.connect(channelAudioNodes[channel].inputNode);
 
 		// note on
 		note = new WebMIDI.residentWAFSynthNote.ResidentWAFSynthNote(audioContext, noteGainNode, preset.envType, zone, midi);
 		note.noteOn();
-		channelData[channel].currentNoteOns.push(note);
+        channelControls[channel].currentNoteOns.push(note);
 	};
 
 	ResidentWAFSynth.prototype.noteOff = function(channel, key, velocity)
 	{
-		let currentNoteOns = channelData[channel].currentNoteOns,
+        let currentNoteOns = channelControls[channel].currentNoteOns,
 			noteIndex = currentNoteOns.findIndex(obj => obj.key === key);
 
 		if(noteIndex >= 0)
@@ -1136,29 +1184,29 @@ WebMIDI.residentWAFSynth = (function(window)
 	// The bank argument is in range [0..127].
 	ResidentWAFSynth.prototype.updateBank = function(channel, bankIndex)
 	{
-		channelData[channel].bankIndex = bankIndex;
+        channelControls[channel].bankIndex = bankIndex;
 	};
 
 	// N.B. the presetIndex argument is the General MIDI presetIndex
 	ResidentWAFSynth.prototype.updatePreset = function(channel, presetIndex)
 	{
-		channelData[channel].presetIndex = presetIndex;
+        channelControls[channel].presetIndex = presetIndex;
 	};
 
 	ResidentWAFSynth.prototype.updatePitchWheel = function(channel, lowerByte, higherByte)
 	{
-		var pitchBend = ((lowerByte & 0x7f) | ((higherByte & 0x7f) << 7)) - 8192,
-			currentNoteOns = channelData[channel].currentNoteOns;
+		var pitchBend14Bit = ((lowerByte & 0x7f) | ((higherByte & 0x7f) << 7)) - 8192,
+            currentNoteOns = channelControls[channel].currentNoteOns;
 
 		if(currentNoteOns !== undefined)
 		{
 			let nNoteOns = currentNoteOns.length;
 			for(let i = 0; i < nNoteOns; ++i)
 			{
-				currentNoteOns[i].updatePlaybackRate(pitchBend);
+				currentNoteOns[i].updatePlaybackRate(pitchBend14Bit);
 			}
 		}
-		channelData[channel].pitchBend = pitchBend;
+        channelControls[channel].pitchWheel = lowerByte;
 	};
 
 	// Both of these should be called by clients, but setting registeredParameterCoarse to anything other than 0
@@ -1166,22 +1214,23 @@ WebMIDI.residentWAFSynth = (function(window)
 	// Setting registeredParameterCoarse has been suppressed in this synth's UI in the WebMIDISynthHost app. 
 	ResidentWAFSynth.prototype.registeredParameterCoarse = function(channel, value)
 	{
-		channelData[channel].registeredParameterCoarse = value;
+        channelControls[channel].registeredParameterCoarse = value;
 	};
 	ResidentWAFSynth.prototype.dataEntryCoarse = function(channel, semitones)
 	{
-		channelData[channel].dataEntryCoarse = semitones;
+        channelControls[channel].dataEntryCoarse = semitones;
 
-		let currentNoteOns = channelData[channel].currentNoteOns;
+        let currentNoteOns = channelControls[channel].currentNoteOns;
 		if(currentNoteOns !== undefined)
 		{
-			let pitchBend = channelData[channel].pitchBend,
+            let pitchWheel = channelControls[channel].pitchWheel,
+                pitchBend14bit = getPitchBend14bit(pitchWheel),
 				nNoteOns = currentNoteOns.length;
 
 			for(let i = 0; i < nNoteOns; ++i)
 			{
 				currentNoteOns[i].pitchBendSensitivity = semitones;
-				currentNoteOns[i].updatePlaybackRate(pitchBend);
+				currentNoteOns[i].updatePlaybackRate(pitchBend14bit);
 			}
 		}
 	};
@@ -1189,26 +1238,29 @@ WebMIDI.residentWAFSynth = (function(window)
 	// The reverberation argument is in range [0..127], meaning completely dry to completely wet.
 	ResidentWAFSynth.prototype.updateReverberation = function(channel, reverberation)
     {
-        channelData[channel].reverberator.setValueAtTime(reverberation, this.audioContext.currentTime);
+        channelAudioNodes[channel].reverberator.setValueAtTime(reverberation, this.audioContext.currentTime);
+        channelControls[channel].reverberation = reverberation;
 	};
 
 	// The volume argument is in range [0..127], meaning muted to as loud as possible.
 	ResidentWAFSynth.prototype.updateVolume = function(channel, volume)
 	{
 		let volumeFactor = volume / 127;
-		channelData[channel].gainNode.gain.setValueAtTime(volumeFactor, this.audioContext.currentTime);
+        channelAudioNodes[channel].gainNode.gain.setValueAtTime(volumeFactor, this.audioContext.currentTime);
+        channelControls[channel].volume = volume;
 	};
 
 	// The pan argument is in range [0..127], meaning completely left to completely right.
 	ResidentWAFSynth.prototype.updatePan = function(channel, pan)
 	{
 		let panValue = ((pan / 127) * 2) - 1; // panValue is in range [-1..1]
-		channelData[channel].panNode.pan.setValueAtTime(panValue, this.audioContext.currentTime);
+        channelAudioNodes[channel].panNode.pan.setValueAtTime(panValue, this.audioContext.currentTime);
+        channelControls[channel].pan = pan;
 	};
 
 	ResidentWAFSynth.prototype.allSoundOff = function(channel)
 	{
-		var currentNoteOns = channelData[channel].currentNoteOns;
+        var currentNoteOns = channelControls[channel].currentNoteOns;
 
 		while(currentNoteOns.length > 0)
 		{
@@ -1218,14 +1270,14 @@ WebMIDI.residentWAFSynth = (function(window)
 
 	ResidentWAFSynth.prototype.resetAllControl = function(channel)
 	{
-		var currentNoteOns = channelData[channel].currentNoteOns;
+        var currentNoteOns = channelControls[channel].currentNoteOns;
 
 		while(currentNoteOns.length > 0)
 		{
 			this.noteOff(channel, currentNoteOns[0].key, 0);
 		}
 
-		this.setChannelDefaults(channel);
+		this.setCCDefaultsForChannel(channel);
 	};
 
 	return API;
