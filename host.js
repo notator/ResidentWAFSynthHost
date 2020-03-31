@@ -275,7 +275,10 @@ WebMIDI.host = (function(document)
             setGUIControls(synthChannelControlsState);
 		},
 
-		// called by onSoundFontSelectChanged with Sf2 fonts,and by "send again" button.
+        // called
+        // 1. by onWebAudioFontSelectChanged() when called after synth.open,
+        // 2. by changing the presetSelect value for a channel
+        // 3. by clicking the presetSelect "send again" button.
 		onPresetSelectChanged = function()
 		{
 			let CMD = WebMIDI.constants.COMMAND,
@@ -287,15 +290,10 @@ WebMIDI.host = (function(document)
 				bankIndex, presetIndex;
 
 
-			if(selectedOption.preset !== undefined) // residentWAFSynth
+			if(selectedOption.preset !== undefined)
 			{
 				presetIndex = selectedOption.preset.presetIndex;
 				bankIndex = selectedOption.preset.bankIndex;
-			}
-			else  // residentSf2Synth
-			{
-				presetIndex = selectedOption.presetIndex;
-				bankIndex = selectedOption.bankIndex;
 			}
 
 			let status = CMD.CONTROL_CHANGE + channel;
@@ -305,7 +303,14 @@ WebMIDI.host = (function(document)
 
 			status = CMD.PRESET + channel;
 			message = new Uint8Array([status, presetIndex]);
-			synth.send(message, performance.now());
+            synth.send(message, performance.now());
+
+            for(let chnl = 0; chnl < 16; chnl++)
+            {
+                synth.setAllControllersOff(chnl); // sets all controls except bank and preset to their default values
+            }
+
+            onChannelSelectChanged(); // updates the GUI
 		},
 
 		setOptions = function(select, options)
@@ -724,6 +729,16 @@ WebMIDI.host = (function(document)
             presetSelect.selectedIndex = 0;
             if(!isInitializing)
             {
+                getElem("channelSelect").selectedIndex = 0;
+
+                let option0 = presetSelect.options[0],
+                    presetIndex = option0.preset.presetIndex,
+                    bankIndex = option0.preset.bankIndex;
+
+                synth.setAllChannelPresets(bankIndex, presetIndex);
+
+                // sets all controls except bank and preset to their default values
+                // then updates the GUI
                 onPresetSelectChanged();
             }
 		},

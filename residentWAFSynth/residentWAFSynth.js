@@ -917,7 +917,7 @@ WebMIDI.residentWAFSynth = (function(window)
 			{
 				checkControlExport(CTL.ALL_CONTROLLERS_OFF);
 				// console.log("residentWAFSynth AllControllersOff: channel:" + channel);
-				that.resetAllControl(channel);
+				that.setAllControllersOff(channel);
 			}
 			function setAllSoundOff(channel)
 			{
@@ -1013,10 +1013,19 @@ WebMIDI.residentWAFSynth = (function(window)
 		}
     };
 
+    ResidentWAFSynth.prototype.setAllChannelPresets = function(bankIndex, presetIndex)
+    {
+        for(var i = 0; i < 16; i++)
+        {
+            channelControls[i].bankIndex = bankIndex;
+            channelControls[i].presetIndex = presetIndex;
+        }
+    }
+
     // This command resets the pitchWheel and all CC controllers to their default values,
     // but does *not* reset the current bank or preset.
     // (CMD.CHANNEL_PRESSURE should also be reset here if/when it is implemented.) 
-	ResidentWAFSynth.prototype.setCCDefaultsForChannel = function(channel)
+	ResidentWAFSynth.prototype.setAllCCDefaultsForChannel = function(channel)
 	{
         let commandDefaultValue = WebMIDI.constants.commandDefaultValue,
             controlDefaultValue = WebMIDI.constants.controlDefaultValue;
@@ -1070,7 +1079,7 @@ WebMIDI.residentWAFSynth = (function(window)
 
 		for(let i = 0; i < 16; ++i)
         {
-			this.setCCDefaultsForChannel(i);
+			this.setAllCCDefaultsForChannel(i);
 		}
 
 		console.log("residentWAFSynth WebAudioFont set.");
@@ -1268,7 +1277,7 @@ WebMIDI.residentWAFSynth = (function(window)
 		}
 	};
 
-	ResidentWAFSynth.prototype.resetAllControl = function(channel)
+	ResidentWAFSynth.prototype.setAllControllersOff = function(channel)
 	{
         var currentNoteOns = channelControls[channel].currentNoteOns;
 
@@ -1277,7 +1286,7 @@ WebMIDI.residentWAFSynth = (function(window)
 			this.noteOff(channel, currentNoteOns[0].key, 0);
 		}
 
-		this.setCCDefaultsForChannel(channel);
+		this.setAllCCDefaultsForChannel(channel);
 	};
 
 	return API;
