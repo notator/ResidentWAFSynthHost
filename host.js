@@ -212,21 +212,6 @@ WebMIDI.host = (function(document)
                         }
                     }
                 }
-                function setPresetSelect(bankIndex, presetIndex)
-                {
-                    let presetSelect = getElem("presetSelect"),
-                        options = presetSelect.options;
-
-                    for(var i = 0; i < options.length; i++)
-                    {
-                        let preset = options[i].preset;
-                        if(preset.bankIndex === bankIndex && preset.presetIndex === presetIndex)
-                        {
-                            presetSelect.selectedIndex = i;
-                            break;
-                        }
-                    }
-                }
 
                 let CMD = WebMIDI.constants.COMMAND,
                     CTL = WebMIDI.constants.CONTROL,
@@ -263,54 +248,59 @@ WebMIDI.host = (function(document)
                         }
                     }
                 }
-
-                setPresetSelect(bankIndex, presetIndex);
             }
 
             let channelSelect = getElem("channelSelect"),
                 channel = channelSelect.selectedIndex,
-                synthChannelControlsState = synth.channelControlsState(channel);
+                channelOption = channelSelect.options[channelSelect.selectedIndex],
+                bankIndex = channelOption.bankIndex,
+                presetIndex = channelOption.presetIndex,
+                presetSelect = getElem("presetSelect"),
+                presetSelectOptions = presetSelect.options,
+                presetOptionIndex;
 
-            // channelData contains all the info necessary for setting the GUI controls.
+            for(var i = 0; i < presetSelectOptions.length; i++)
+            {
+                let option = presetSelectOptions[i];
+                if(option.preset.bankIndex === bankIndex && option.preset.presetIndex === presetIndex)
+                {
+                    presetOptionIndex = i
+                    break;
+                }
+            }
+
+            presetSelect.selectedIndex = presetOptionIndex;
+
+            synth.setPresetInChannel(channel, bankIndex, presetIndex); // necessary when initializing
+
+            let synthChannelControlsState = synth.channelControlsState(channel);
             setGUIControls(synthChannelControlsState);
 		},
 
-        // called
-        // 1. by onWebAudioFontSelectChanged() when called after synth.open,
-        // 2. by changing the presetSelect value for a channel
-        // 3. by clicking the presetSelect "send again" button.
 		onPresetSelectChanged = function()
-		{
+        {
 			let CMD = WebMIDI.constants.COMMAND,
 				CTL = WebMIDI.constants.CONTROL,
 				channelSelect = getElem("channelSelect"),
 				presetSelect = getElem("presetSelect"),
 				channel = channelSelect.selectedIndex,
-				selectedOption = presetSelect.options[presetSelect.selectedIndex],
-				bankIndex, presetIndex;
+                selectedOption = presetSelect.options[presetSelect.selectedIndex],
+                bankIndex = selectedOption.preset.bankIndex,
+                presetIndex = selectedOption.preset.presetIndex,
+                status = CMD.CONTROL_CHANGE + channel,
+                data1 = CTL.BANK,
+                message = new Uint8Array([status, data1, bankIndex]);
 
-
-			if(selectedOption.preset !== undefined)
-			{
-				presetIndex = selectedOption.preset.presetIndex;
-				bankIndex = selectedOption.preset.bankIndex;
-			}
-
-			let status = CMD.CONTROL_CHANGE + channel;
-			let data1 = CTL.BANK;
-			let message = new Uint8Array([status, data1, bankIndex]);
 			synth.send(message, performance.now());
 
 			status = CMD.PRESET + channel;
 			message = new Uint8Array([status, presetIndex]);
             synth.send(message, performance.now());
 
-            for(let chnl = 0; chnl < 16; chnl++)
-            {
-                synth.setAllControllersOff(chnl); // sets all controls except bank and preset to their default values
-            }
+            synth.setPresetInChannel(channel, bankIndex, presetIndex);
 
-            onChannelSelectChanged(); // updates the GUI
+            channelSelect.options[channelSelect.selectedIndex].bankIndex = bankIndex;
+            channelSelect.options[channelSelect.selectedIndex].presetIndex = presetIndex;
 		},
 
 		setOptions = function(select, options)
@@ -564,7 +554,7 @@ WebMIDI.host = (function(document)
                             console.assert(synth.name === "ResidentWAFSynth", "Error: This app only uses the residentWAFSynth.");
                             let presetSelectCell = getElem("presetSelectCell")
                             appendPresetSelect(presetSelectCell, webAudioFontSelect[webAudioFontSelect.selectedIndex].presetOptionsArray);
-                            onWebAudioFontSelectChanged(true);
+                            onWebAudioFontSelectChanged();
                         }
                         else if(cmdIndex === CMD.CHANNEL_PRESSURE || cmdIndex === CMD.PITCHWHEEL || cmdIndex === CMD.AFTERTOUCH)
                         {
@@ -715,32 +705,40 @@ WebMIDI.host = (function(document)
 		},
 
 		// exported
-		onWebAudioFontSelectChanged = function(isInitializing)
-		{
-			let webAudioFontSelect = getElem("webAudioFontSelect"),
+		onWebAudioFontSelectChanged = function()
+        {
+            function setDefaultPresetPerChannel(channelSelect, presetOptionsArray)
+            {
+                let presetOptionIndex = 0;
+                for(var i = 0; i < 16; i++)
+                {
+                    let channelOption = channelSelect.options[i],
+                        presetOption = presetOptionsArray[presetOptionIndex];
+
+                    channelOption.bankIndex = presetOption.preset.bankIndex; 
+                    channelOption.presetIndex = presetOption.preset.presetIndex;
+
+                    presetOptionIndex++;
+                    presetOptionIndex = (presetOptionIndex < presetOptionsArray.length) ? presetOptionIndex : 0;
+                }
+            }
+
+            let webAudioFontSelect = getElem("webAudioFontSelect"),
+                channelSelect = getElem("channelSelect"),
 				presetSelect = getElem("presetSelect"),
 				selectedSoundFontOption = webAudioFontSelect[webAudioFontSelect.selectedIndex],
 				soundFont = selectedSoundFontOption.soundFont,
-				presetOptionsArray = selectedSoundFontOption.presetOptionsArray;
+                presetOptionsArray = selectedSoundFontOption.presetOptionsArray;
 
-			synth.setSoundFont(soundFont);
+            synth.setSoundFont(soundFont);
 
-			setOptions(presetSelect, presetOptionsArray);
+            setOptions(presetSelect, presetOptionsArray);
             presetSelect.selectedIndex = 0;
-            if(!isInitializing)
-            {
-                getElem("channelSelect").selectedIndex = 0;
 
-                let option0 = presetSelect.options[0],
-                    presetIndex = option0.preset.presetIndex,
-                    bankIndex = option0.preset.bankIndex;
+            setDefaultPresetPerChannel(channelSelect, presetOptionsArray);
+            channelSelect.selectedIndex = 0;
 
-                synth.setAllChannelPresets(bankIndex, presetIndex);
-
-                // sets all controls except bank and preset to their default values
-                // then updates the GUI
-                onPresetSelectChanged();
-            }
+            onChannelSelectChanged();
 		},
 
 		// exported.

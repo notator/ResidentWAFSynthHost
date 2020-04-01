@@ -31,6 +31,10 @@ WebMIDI.residentWAFSynth = (function(window)
         PRESET_ENVTYPE_UNENDING = 2;
 
     let
+        banks, // set in synth.setSoundFont
+        channelAudioNodes = [], // initialized in synth.open
+        channelControls = [], // initialized in synth.open
+
 		// Called by the constructor, which sets this.webAudioFonts to the return value of this function.
 		// Creates all the WebAudioFonts defined in "residentWAFSynth/webAudioFontDefs/webAudioFontDefs.js",
 		// adjusting (=decoding) all the required WebAudioFontPresets.
@@ -628,9 +632,22 @@ WebMIDI.residentWAFSynth = (function(window)
             return ((byte << 7) + byte) - 8192;
         },
 
-		banks, // set in synth.setSoundFont
-        channelAudioNodes = [], // initialized in synth.open
-        channelControls = [], // initialized in synth.open
+        // This command resets the pitchWheel and all CC controllers to their default values,
+        // but does *not* reset the current bank or preset.
+        // (CMD.CHANNEL_PRESSURE should also be reset here if/when it is implemented.) 
+        setCCDefaults = function(that, channel)
+        {
+            let commandDefaultValue = WebMIDI.constants.commandDefaultValue,
+                controlDefaultValue = WebMIDI.constants.controlDefaultValue;
+
+            that.updatePitchWheel(channel, commandDefaultValue(CMD.PITCHWHEEL));
+
+            that.registeredParameterCoarse(channel, controlDefaultValue(CTL.REGISTERED_PARAMETER_COARSE));
+            that.dataEntryCoarse(channel, controlDefaultValue(CTL.DATA_ENTRY_COARSE));
+            that.updateReverberation(channel, controlDefaultValue(CTL.REVERBERATION));
+            that.updateVolume(channel, controlDefaultValue(CTL.VOLUME));
+            that.updatePan(channel, controlDefaultValue(CTL.PAN));
+        },
 
 		/*  end of gree variables  ****************************************/
 		/******************************************************************/
@@ -769,11 +786,10 @@ WebMIDI.residentWAFSynth = (function(window)
                 CTL = constants.CONTROL,
                 commandDefaultValue = constants.commandDefaultValue,
                 controlDefaultValue = constants.controlDefaultValue,
-                presetData = WebMIDI.initialPresetsPerChannel.channelsData[channel],
                 controlState = {};
 
-            controlState.bankIndex = presetData.bankIndex;
-            controlState.presetIndex = presetData.presetIndex;
+            controlState.bankIndex = -1; // These are set to the first preset in a font, when the font is loaded
+            controlState.presetIndex = -1;
 
             controlState.pitchWheel = commandDefaultValue(CMD.PITCHWHEEL);
 
@@ -786,8 +802,6 @@ WebMIDI.residentWAFSynth = (function(window)
 
             return controlState;
         }
-
-        console.assert(WebMIDI.initialPresetsPerChannel.fontName === this.webAudioFonts[0].name);
 
 		let audioContext = this.audioContext; 
 
@@ -913,11 +927,11 @@ WebMIDI.residentWAFSynth = (function(window)
 				that.updateReverberation(channel, value);
 			}
 
-			function setAllControllersOff(channel)
+			function allControllersOff(channel)
 			{
 				checkControlExport(CTL.ALL_CONTROLLERS_OFF);
 				// console.log("residentWAFSynth AllControllersOff: channel:" + channel);
-				that.setAllControllersOff(channel);
+				that.allControllersOff(channel);
 			}
 			function setAllSoundOff(channel)
 			{
@@ -961,7 +975,7 @@ WebMIDI.residentWAFSynth = (function(window)
 					setReverberation(channel, data2);
 					break;
 				case CTL.ALL_CONTROLLERS_OFF:
-					setAllControllersOff(channel);
+					allControllersOff(channel);
 					break;
 				case CTL.ALL_SOUND_OFF:
 					setAllSoundOff(channel);
@@ -1013,32 +1027,6 @@ WebMIDI.residentWAFSynth = (function(window)
 		}
     };
 
-    ResidentWAFSynth.prototype.setAllChannelPresets = function(bankIndex, presetIndex)
-    {
-        for(var i = 0; i < 16; i++)
-        {
-            channelControls[i].bankIndex = bankIndex;
-            channelControls[i].presetIndex = presetIndex;
-        }
-    }
-
-    // This command resets the pitchWheel and all CC controllers to their default values,
-    // but does *not* reset the current bank or preset.
-    // (CMD.CHANNEL_PRESSURE should also be reset here if/when it is implemented.) 
-	ResidentWAFSynth.prototype.setAllCCDefaultsForChannel = function(channel)
-	{
-        let commandDefaultValue = WebMIDI.constants.commandDefaultValue,
-            controlDefaultValue = WebMIDI.constants.controlDefaultValue;
-
-		this.updatePitchWheel(channel, commandDefaultValue(CMD.PITCHWHEEL));
-
-		this.registeredParameterCoarse(channel, controlDefaultValue(CTL.REGISTERED_PARAMETER_COARSE));
-		this.dataEntryCoarse(channel, controlDefaultValue(CTL.DATA_ENTRY_COARSE));
-		this.updateReverberation(channel, controlDefaultValue(CTL.REVERBERATION));
-		this.updateVolume(channel, controlDefaultValue(CTL.VOLUME));
-		this.updatePan(channel, controlDefaultValue(CTL.PAN));
-    };
-
     ResidentWAFSynth.prototype.channelControlsState = function(channel)
     {
         let controlsInfo = channelControls[channel],
@@ -1049,12 +1037,12 @@ WebMIDI.residentWAFSynth = (function(window)
 
         state.push({ ccIndex: CTL.BANK, ccValue: controlsInfo.bankIndex });
         state.push({ ccIndex: CTL.VOLUME, ccValue: controlsInfo.volume });
-        state.push({ ccIndex: CTL.PAN, ccValue: controlsInfo.pan});
+        state.push({ ccIndex: CTL.PAN, ccValue: controlsInfo.pan });
         state.push({ ccIndex: CTL.REVERBERATION, ccValue: controlsInfo.reverberation });
         state.push({ ccIndex: CTL.DATA_ENTRY_COARSE, ccValue: controlsInfo.dataEntryCoarse });
 
         return state;
-    }
+    };
 
 	ResidentWAFSynth.prototype.setSoundFont = function(webAudioFont)
     {
@@ -1075,11 +1063,11 @@ WebMIDI.residentWAFSynth = (function(window)
 				bank[preset.presetIndex] = preset;
 			}
 			banks.push(bank);
-		}
+        }
 
 		for(let i = 0; i < 16; ++i)
         {
-			this.setAllCCDefaultsForChannel(i);
+			setCCDefaults(this, i);
 		}
 
 		console.log("residentWAFSynth WebAudioFont set.");
@@ -1275,9 +1263,15 @@ WebMIDI.residentWAFSynth = (function(window)
 		{
 			this.noteOff(channel, currentNoteOns[0].key, 0);
 		}
-	};
+    };
 
-	ResidentWAFSynth.prototype.setAllControllersOff = function(channel)
+    ResidentWAFSynth.prototype.setPresetInChannel = function(channel, bankIndex, presetIndex)
+    {
+        channelControls[channel].bankIndex = bankIndex;
+        channelControls[channel].presetIndex = presetIndex;
+    };
+
+	ResidentWAFSynth.prototype.allControllersOff = function(channel)
 	{
         var currentNoteOns = channelControls[channel].currentNoteOns;
 
@@ -1286,7 +1280,7 @@ WebMIDI.residentWAFSynth = (function(window)
 			this.noteOff(channel, currentNoteOns[0].key, 0);
 		}
 
-		this.setAllCCDefaultsForChannel(channel);
+		setCCDefaults(this, channel);
 	};
 
 	return API;
