@@ -19,7 +19,7 @@ WebMIDI.residentWAFSynthNote = (function()
     "use strict";
 
 	var
-		ResidentWAFSynthNote = function(audioContext, noteGainNode, envelopeType, zone, midi)
+		ResidentWAFSynthNote = function(audioContext, noteGainNode, zone, midi)
 		{
 			if(!(this instanceof ResidentWAFSynthNote))
 			{
@@ -28,7 +28,6 @@ WebMIDI.residentWAFSynthNote = (function()
 
 			this.audioContext = audioContext;
 			this.noteGainNode = noteGainNode; // this node has been connected to a channel inputNode
-			this.envType = envelopeType;
 			this.zone = zone;
 
 			this.key = midi.key;
