@@ -7,7 +7,42 @@ WebMIDI.namespace('percussionPresets'); // omit if there are no percussion prese
 // Banks do not have to contain the same set of midiPreset indices (that's application specific).
 // There can be up to 127 banks in a webAudioFontDef.
 WebMIDI.webAudioFontDefs =
-	[
+    [
+        {
+            name: "ensemble (two banks)",
+            presetNamesPerBank:
+                [
+                    [	// bank 0
+                        "_tone_0160_FluidR3_GM_sf2_file", // presetIndex:16, drawbarOrgan
+                        "_tone_0080_FluidR3_GM_sf2_file", // presetIndex:8, celesta
+                        "_tone_0090_FluidR3_GM_sf2_file", // presetIndex:9, glockenspiel
+                        "_tone_0100_FluidR3_GM_sf2_file", // presetIndex:10, musicBox
+                        "_tone_0110_FluidR3_GM_sf2_file", // presetIndex:11, vibraphone
+                        "_tone_0120_FluidR3_GM_sf2_file", // presetIndex:12, marimba
+                        "_tone_0130_FluidR3_GM_sf2_file", // presetIndex:13, xylophone
+                        "_tone_0140_FluidR3_GM_sf2_file", // presetIndex:14, tubularBells
+                        "_tone_0150_FluidR3_GM_sf2_file", // presetIndex:15, dulcimer
+                        "_tone_0240_FluidR3_GM_sf2_file", // presetIndex:24, nylonGuitar
+                        "_tone_0250_FluidR3_GM_sf2_file", // presetIndex:25, steelGuitar
+                        "_tone_0260_FluidR3_GM_sf2_file", // presetIndex:26, electricGuitarJazz
+                        "_tone_0270_FluidR3_GM_sf2_file", // presetIndex:27, electricGuitarClean
+                        "_tone_0460_FluidR3_GM_sf2_file", // presetIndex:46, Harp
+                        "percussion (FluidR3 metal and wood)",// presetIndex:126, (percussion preset defined below)
+                        "percussion (FluidR3 drums)"	  // presetIndex:127, (percussion preset defined below)
+                    ],
+                    [   // bank 1
+                        "_tone_0080_GeneralUserGS_sf2_file", // presetIndex:8, celesta
+                        "_tone_0090_GeneralUserGS_sf2_file", // presetIndex:9, glockenspiel
+                        "_tone_0100_GeneralUserGS_sf2_file", // presetIndex:10, musicBox
+                        "_tone_0110_GeneralUserGS_sf2_file", // presetIndex:11, vibraphone
+                        "_tone_0120_GeneralUserGS_sf2_file", // presetIndex:12, marimba
+                        "_tone_0130_GeneralUserGS_sf2_file", // presetIndex:13, xylophone
+                        "_tone_0140_GeneralUserGS_sf2_file", // presetIndex:14, tubularBells
+                        "_tone_0160_GeneralUserGS_sf2_file", // presetIndex:16, drawbarOrgan
+                        "percussion (FluidR3 drums)"		 // presetIndex:127, (percussion preset defined below)
+                    ]
+                ]
+        },
 		{
 			name: "Study 2",
 			presetNamesPerBank:
@@ -57,41 +92,6 @@ WebMIDI.webAudioFontDefs =
 					"_tone_0730_FluidR3_GM_sf2_file"  // presetIndex:73, flute
 				]
 			]
-		},
-		{
-			name: "ensemble (two banks)",
-			presetNamesPerBank:
-				[						
-					[	// bank 0
-						"_tone_0080_FluidR3_GM_sf2_file", // presetIndex:8, celesta
-						"_tone_0090_FluidR3_GM_sf2_file", // presetIndex:9, glockenspiel
-						"_tone_0100_FluidR3_GM_sf2_file", // presetIndex:10, musicBox
-						"_tone_0110_FluidR3_GM_sf2_file", // presetIndex:11, vibraphone
-						"_tone_0120_FluidR3_GM_sf2_file", // presetIndex:12, marimba
-						"_tone_0130_FluidR3_GM_sf2_file", // presetIndex:13, xylophone
-						"_tone_0140_FluidR3_GM_sf2_file", // presetIndex:14, tubularBells
-						"_tone_0150_FluidR3_GM_sf2_file", // presetIndex:15, dulcimer
-						"_tone_0160_FluidR3_GM_sf2_file", // presetIndex:16, drawbarOrgan
-						"_tone_0240_FluidR3_GM_sf2_file", // presetIndex:24, nylonGuitar
-						"_tone_0250_FluidR3_GM_sf2_file", // presetIndex:25, steelGuitar
-						"_tone_0260_FluidR3_GM_sf2_file", // presetIndex:26, electricGuitarJazz
-						"_tone_0270_FluidR3_GM_sf2_file", // presetIndex:27, electricGuitarClean
-						"_tone_0460_FluidR3_GM_sf2_file", // presetIndex:46, Harp
-						"percussion (FluidR3 metal and wood)",// presetIndex:126, (percussion preset defined below)
-						"percussion (FluidR3 drums)"	  // presetIndex:127, (percussion preset defined below)
-					],						
-					[   // bank 1
-						"_tone_0080_GeneralUserGS_sf2_file", // presetIndex:8, celesta
-						"_tone_0090_GeneralUserGS_sf2_file", // presetIndex:9, glockenspiel
-						"_tone_0100_GeneralUserGS_sf2_file", // presetIndex:10, musicBox
-						"_tone_0110_GeneralUserGS_sf2_file", // presetIndex:11, vibraphone
-						"_tone_0120_GeneralUserGS_sf2_file", // presetIndex:12, marimba
-						"_tone_0130_GeneralUserGS_sf2_file", // presetIndex:13, xylophone
-						"_tone_0140_GeneralUserGS_sf2_file", // presetIndex:14, tubularBells
-						"_tone_0160_GeneralUserGS_sf2_file", // presetIndex:16, drawbarOrgan
-						"percussion (FluidR3 drums)"		 // presetIndex:127, (percussion preset defined below)
-					]
-				]
 		},
 		{
 			name: "keyboards (two banks)",
