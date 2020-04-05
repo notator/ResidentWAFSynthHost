@@ -1,5 +1,5 @@
 ### ResidentWAFSynth Host
-This is a Web Audio application, written in HTML5 and Javascript within which the ResidentWAFSynth is being developed.<br />
+This is a Web Audio application, written in HTML5 and Javascript, within which the ResidentWAFSynth is being developed.<br />
 It can be tried out at https://james-ingram-act-two.de/open-source/ResidentWAFSynthHost/host.html <br />
 The host application uses the Web MIDI API to allow an attached hardware input MIDI device to control the synthesizer, but this is not absolutely necessary.<br />
 <br />
