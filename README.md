@@ -1,12 +1,12 @@
 ### ResidentWAFSynth Host
 This is a Web Audio application, written in HTML5 and Javascript, within which the ResidentWAFSynth is being developed.<br />
 It can be tried out at https://james-ingram-act-two.de/open-source/ResidentWAFSynthHost/host.html <br />
-The host application uses the Web MIDI API to allow an attached hardware input MIDI device to control the synthesizer, but this is not absolutely necessary.<br />
+The host uses the Web MIDI API's _Input Device_ interface so that an attached hardware MIDI input device can be used to control the synthesizer. This is, however, not absolutely necessary.<br />
 <br />
 **ResidentWAFSynth**<br />
 This a GUI-less software synth, written entirely in Javascript, that uses the Web _Audio_ API to implement the Web _MIDI_ API's _Output Device_ interface. Such software synths can be included in websites as a substitute for end-user hardware MIDI Output devices, so they are especially useful on mobile devices. Also, since they themselves provide the MIDI Output Device interface, they don't depend on browser implementations of the Web MIDI API.<br />
 <br />
-This synth uses [WebAudioFont](https://github.com/surikov/webaudiofont) presets which are flexible to use and load very quickly. The WebAudioFonts can be arbitrarily configured in the `residentWAFSynth/webAudioFontDefs.js` file. For illustration purposes, the example in this repository is deliberately large. The equivalent file in other installations would typically be much smaller.<br />
+This synth uses [WebAudioFont](https://github.com/surikov/webaudiofont) presets. These load very quickly, and can be arbitrarily configured in the `residentWAFSynth/webAudioFontDefs.js` file. For illustration purposes, the example in this repository is deliberately large. The equivalent file in other installations would typically be much smaller.<br />
 The code for this synth owes a lot to Sergey Surikov's [WebAudioFontPlayer](https://surikov.github.io/webaudiofont/npm/dist/WebAudioFontPlayer.js). In particular, the code for loading and adjusting presets is very similar to the code in his `WebAudioFontLoader`.<br />
 The synth has the same controls as the _ResidentSf2Synth_ (its direct predecessor &mdash; see WebMIDISynthHost below), but with an additional reverberation control which is practically a clone of Surikov's `WebAudioFontReverberator`.<br />
 It should be easy to add more controls in future using the reverberator as a model (Low Frequency Modulation, Ring-Modulation, Envelope controls etc.).<br />
