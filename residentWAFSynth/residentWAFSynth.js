@@ -1065,10 +1065,17 @@ WebMIDI.residentWAFSynth = (function(window)
 			banks.push(bank);
         }
 
+        let defaultBankIndex = 0,
+            defaultPresetIndex = webAudioFont.banks[0][0].presetIndex;
+        
 		for(let i = 0; i < 16; ++i)
         {
+            // set default bank and preset.
+            // N.B. In the ResidentWAFSynthHost application, the bank and preset defaults are
+            // overridden so that each channel is given its own preset when the app initializes.
+            this.setPresetInChannel(i, defaultBankIndex, defaultPresetIndex);
 			setCCDefaults(this, i);
-		}
+        }
 
 		console.log("residentWAFSynth WebAudioFont set.");
 	};
